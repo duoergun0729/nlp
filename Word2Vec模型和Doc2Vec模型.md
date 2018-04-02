@@ -1,6 +1,7 @@
 # Word2Vec模型
 Word2Vec是Google在2013年开源的一款将词表征为实数值向量的高效工具，采用的模型有CBOW(Continuous Bag-Of-Words，即连续的词袋模型)和Skip-Gram 两种。Word2Vec通过训练，可以把对文本内容的处理简化为K维向量空间中的向量运算，而向量空间上的相似度可以用来表示文本语义上的相似度。因此，Word2Vec 输出的词向量可以被用来做很多NLP相关的工作，比如聚类、找同义词、词性分析等等。
 ![CBOW和Skip-gram原理图](picture/Word2Vec模型和Doc2Vec模型-图1.png)
+
  CBOW模型能够根据输入周围n-1个词来预测出这个词本身，而Skip-gram模型能够根据词本身来预测周围有哪些词。也就是说，CBOW模型的输入是某个词A周围的n个单词的词向量之和，输出是词A本身的词向量，而Skip-gram模型的输入是词A本身，输出是词A周围的n个单词的词向量。
 Word2Vec最常用的开源实现之一就是gensim，网址为：
 
@@ -53,6 +54,7 @@ Word2Vec的维度与之前设置的神经网络的隐藏层的单元数相同为
 基于上述的Word2Vec的方法，Quoc Le 和Tomas Mikolov又给出了Doc2Vec的训练方法。如下图所示，其原理与Word2Vec相同，分为Distributed Memory (DM) 和Distributed Bag of Words (DBOW)。
 
 ![DM和DBOW原理图](picture/NLP之Word2Vec模型和Doc2Vec模型-图2.png)
+
 以处理IMDB数据集为例，初始化Doc2Vec对象，设置神经网络的隐藏层的单元数为200，生成的词向量的维度也与神经网络的隐藏层的单元数相同。设置处理的窗口大小为8个单词，出现少于10次数的单词会被丢弃掉，迭代计算次数为10次，同时并发线程数与当前计算机的cpu个数相同：
 
 	model=Doc2Vec(dm=0, dbow_words=1, size=max_features, window=8, min_count=10, iter=10, workers=cores)
