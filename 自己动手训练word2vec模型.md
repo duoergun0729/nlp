@@ -39,7 +39,7 @@ word2vec的算法是公开的，word2vec模型的质量完全取决于训练语�
 原始数据中包含完整的html文件，所以需要提取其中的中文内容，通常提取其中`<content>`标签包含的内容即可。
 
 	tar -zxvf news_sohusite_xml.full.tar.gz
-	cat news_sohusite_xml.full.tar.gz | iconv -f gb18030 -t utf-8 | grep "<content>" > news_sohusite.txt
+	cat news_sohusite_xml.dat | iconv -f gb18030 -t utf-8 | grep "<content>" > news_sohusite.txt
 	sed -i "" 's/<content>//g' news_sohusite.txt
 	sed -i "" 's/<\/content>//g' news_sohusite.txt
 
@@ -64,7 +64,7 @@ word2vec的算法是公开的，word2vec模型的质量完全取决于训练语�
 	python -m jieba -d ' ' news_sohusite.txt > news_sohusite_cutword.txt
 
 # 训练word2vec
-完成预处理后，级可以利用gensim库进行训练。
+完成预处理后，即可以利用gensim库进行训练。
 
 	def train_word2vec(filename):
 	    #模型文件不存在才处理
@@ -74,6 +74,8 @@ word2vec的算法是公开的，word2vec模型的质量完全取决于训练语�
 	        model = Word2Vec(sentences,
 	                         size=n_dim, window=5, min_count=2, sg=1, workers=2)
 	        model.save(word2vec_file)
+
+Word2Vec函数常见的几个参数含义如下：
 
 - sentences表示需要处理的语料
 - size表示word2vec的维数，一般50-300
