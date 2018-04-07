@@ -18,6 +18,12 @@
 
 ![公众号](公众号.png)
 
+# 文章列表
+
+- [词袋模型和TFIDF模型](词袋模型和TFIDF模型.md)
+- [Word2Vec模型和Doc2Vec模型](Word2Vec模型和Doc2Vec模型.md)
+- [自己动手训练word2vec模型](自己动手训练word2vec模型.md)
+
 
 # License
 
