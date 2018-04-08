@@ -154,3 +154,56 @@ facebook已经基于其收集的海量语料，训练好了fasttext的词向量�
 content是中文内容，需要使用jieba进行切词，可以把切词的动作也放到上面的命令里面。
 
 	cat news_sohusite_xml-utf8.txt | grep '<content>' | sed  's/<content>//g' | sed  's/<\/content>//g' | python -m jieba -d ' '  > news_sohusite_content.txt
+
+加载url和对应领域的映射关系的文件，以哈希的形式保存对应的映射关系。
+
+	def load_SogouTCE():
+	    SogouTCE=[]
+	    SogouTCE_kv = {}
+	    with open("../data/SogouTCE.txt") as F:
+	        for line in F:
+	            (url,channel)=line.split()
+	            SogouTCE.append(url)
+	        F.close()
+	    for index,url in enumerate(SogouTCE):
+	        #删除http前缀
+	        url=re.sub('http://','',url)
+	        print "k:%s v:%d" % (url,index)
+	        SogouTCE_kv[url]=index
+	    return  SogouTCE_kv
+	    
+我们分析下各个领域的数据分布情况，把匹配上的url对应的标记打印出来。
+
+	def load_url(SogouTCE_kv):
+	    labels=[]
+	    with open("../data/news_sohusite_url.txt") as F:
+	        for line in F:
+	            for k,v in SogouTCE_kv.items():
+	                if re.search(k,line,re.IGNORECASE):
+	                    #print "x:%s y:%d" % (line,v)
+	                    print v
+	                    labels.append(v)
+	        F.close()
+	    return  labels
+	   
+运行程序，分析各个领域对应的url数量。
+
+	python fasttext.py > v.txt
+	cat v.txt | sort -n | uniq -c
+
+每行的第一个字段是数量，第二个字段是对应的领域的id，结果表明搜狐新闻数据集中在某几个领域，并且分布不均匀。为了避免样本不均衡导致的误判，我们选择数量上占前三的领域作为后继分析的数据，id分别为81，79和91。
+
+	138576 79
+	27489 80
+	199871 81
+	23409 82
+	44537 83
+	2179 84
+	13012 85
+	1924 87
+	3294 88
+	 842 89
+	50138 91
+	5882 92
+
+	

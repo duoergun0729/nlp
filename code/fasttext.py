@@ -11,22 +11,29 @@ def load_SogouTCE():
         F.close()
 
     for index,url in enumerate(SogouTCE):
+        #删除http前缀
+        url=re.sub('http://','',url)
         print "k:%s v:%d" % (url,index)
         SogouTCE_kv[url]=index
 
     return  SogouTCE_kv
 
 def load_url(SogouTCE_kv):
+    labels=[]
     with open("../data/news_sohusite_url.txt") as F:
         for line in F:
             for k,v in SogouTCE_kv.items():
-                if re.match(k,line,re.IGNORECASE):
-                    print "x:%s y:%d" % (line,v)
+                if re.search(k,line,re.IGNORECASE):
+                    #print "x:%s y:%d" % (line,v)
+                    print v
+                    labels.append(v)
+                #else:
+                #    print "not found %s" %(line)
 
         F.close()
+    return  labels
 
 if __name__ == '__main__':
     SogouTCE_kv=load_SogouTCE()
 
-
-    load_url(SogouTCE_kv)
+    labels=load_url(SogouTCE_kv)
