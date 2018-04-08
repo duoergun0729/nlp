@@ -114,6 +114,7 @@ facebook已经基于其收集的海量语料，训练好了fasttext的词向量�
 	</doc>
 
 所有的doc节点都直接是最顶层，没有根节点。因此要添加根节点使该文本文件符合xml文件的规范，最简单的一种形式就是在文件的开始和结尾添加根元素标签。
+
 	<?xml version="1.0" encoding="utf-8"?>
 	<docs>
 		<doc>
@@ -141,4 +142,15 @@ facebook已经基于其收集的海量语料，训练好了fasttext的词向量�
 	        F.close()
 	    print "</docs>"
 	    
-在终端执行该程序，并将标准输出的结果保存即可。
+在终端执行该程序，并将标准输出的结果保存即可，剩下的操作只要解析xml文件即可。下面我们介绍另一种方法，观察可以发现，url和content是成对出现的，并且一一对应。我们可以过滤这两个字段的内容，分别保存成content文件和url文件。
+首先过滤出url字段的内容，并且删除掉url标签。
+
+	cat news_sohusite_xml-utf8.txt | grep '<url>' | sed  's/<url>//g' | sed  's/<\/url>//g' > news_sohusite_url.txt
+	
+然后过滤出content字段的内容，并且删除掉content标签。
+
+	cat news_sohusite_xml-utf8.txt | grep '<content>' | sed  's/<content>//g' | sed  's/<\/content>//g' > news_sohusite_content.txt
+
+content是中文内容，需要使用jieba进行切词，可以把切词的动作也放到上面的命令里面。
+
+	cat news_sohusite_xml-utf8.txt | grep '<content>' | sed  's/<content>//g' | sed  's/<\/content>//g' | python -m jieba -d ' '  > news_sohusite_content.txt
