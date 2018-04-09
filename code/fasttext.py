@@ -8,6 +8,8 @@ import codecs
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 
+from sklearn.neural_network import MLPClassifier
+
 
 def load_SogouTCE():
     SogouTCE=[]
@@ -84,13 +86,30 @@ def print_results(N, p, r):
     print("P@{}\t{:.3f}".format(1, p))
     print("R@{}\t{:.3f}".format(1, r))
 
+def do_mlp(x,y):
+
+    #mlp
+    clf = MLPClassifier(solver='lbfgs',
+                        alpha=1e-5,
+                        hidden_layer_sizes=(5, 2),
+                        random_state=1)
+
+    scores = cross_val_score(clf, x, y, cv = 5,scoring='f1')
+    #print scores
+    print("f1: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+    scores = cross_val_score(clf, x, y, cv = 5,scoring='accuracy')
+    #print scores
+    print("accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 if __name__ == '__main__':
-    #SogouTCE_kv=load_SogouTCE()
+    SogouTCE_kv=load_SogouTCE()
 
     #labels=load_url(SogouTCE_kv)
 
-    #x,y=load_selecteddata(SogouTCE_kv)
+    x,y=load_selecteddata(SogouTCE_kv)
+
+
 
     # 分割训练集和测试集
     #x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
