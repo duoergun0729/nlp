@@ -3,6 +3,7 @@ import re
 from fastText import train_supervised
 
 import numpy as np
+import codecs
 
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -28,6 +29,7 @@ def load_SogouTCE():
 def load_url(SogouTCE_kv):
     labels=[]
     with open("../data/news_sohusite_url.txt") as F:
+    #with codecs.open("../data/news_sohusite_url.txt","r",encoding='utf-8', errors='ignore') as F:
         for line in F:
             for k,v in SogouTCE_kv.items():
                 if re.search(k,line,re.IGNORECASE):
@@ -45,6 +47,7 @@ def load_selecteddata(SogouTCE_kv):
     y=[]
 
     #加载content列表
+    #with codecs.open("../data/news_sohusite_content.txt", "r", encoding='utf-8', errors='ignore') as F:
     with open("../data/news_sohusite_content.txt") as F:
         content=F.readlines()
         F.close()
@@ -63,6 +66,8 @@ def load_selecteddata(SogouTCE_kv):
                 y.append(v)
 
     return x,y
+
+
 
 def dump_file(x,y,filename):
     with open(filename, 'w') as f:
@@ -96,6 +101,7 @@ if __name__ == '__main__':
 
     # train_supervised uses the same arguments and defaults as the fastText cli
     model = train_supervised(
-        input="../data/sougou_train.txt", epoch=10, lr=0.9, wordNgrams=2, verbose=2, minCount=2
+        input="../data/sougou_train.txt",
+        epoch=25, lr=0.9, wordNgrams=2, verbose=2, minCount=2
     )
     print_results(*model.test("../data/sougou_test.txt"))

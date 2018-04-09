@@ -267,15 +267,14 @@ python下实现合并数据文件和标签文件的功能非常简单。
     
 查看训练数据文件的内容，举例如下：
 
-	２ ０ １ ２ 款 长安 标致 雪铁龙 Ｄ Ｓ ４ ／ Ｄ Ｓ ５ 九寨沟 试驾
-	 __label__79
+	２ ０ １ ２ 款 长安 标致 雪铁龙 Ｄ Ｓ ４ ／ Ｄ Ｓ ５ 九寨沟 试驾 __label__79
 	 
 ## 训练模型
 下面开始训练fasttext模型。
 
 
 	# train_supervised uses the same arguments and defaults as the fastText cli
-	    model = train_supervised(
+	model = train_supervised(
 	        input="../data/sougou_train.txt", epoch=25, lr=0.6, wordNgrams=2, verbose=2, minCount=1
 	    )
 
@@ -305,3 +304,8 @@ fasttext默认情况下会计算对应的准确率和召回率。
 	Number of words:  260184
 	Number of labels: 3
 
+验证效果如下所示，准确率为48.2%，召回率为48.2%。
+
+	N	71107
+	P@1	0.482
+	R@1	0.482
