@@ -206,4 +206,102 @@ content是中文内容，需要使用jieba进行切词，可以把切词的动�
 	50138 91
 	5882 92
 
+反查对应的url为：
+
+	kit.sohu.com/ id:81
+	auto.sohu.com/ id:79
+	yule.sohu.com/ id:91
 	
+过滤我们关注的领域的内容，将content保存在x列表里，对应的领域的id保存在y列表里，作为标签使用，至此我们完成了数据清洗的工作。
+
+	def load_selecteddata(SogouTCE_kv):
+	    x=[]
+	    y=[]
+	
+	    #加载content列表
+	    with open("../data/news_sohusite_content.txt") as F:
+	        content=F.readlines()
+	        F.close()
+	
+	    # 加载url列表
+	    with open("../data/news_sohusite_url.txt") as F:
+	        url = F.readlines()
+	        F.close()
+	
+	    for index,u in  enumerate(url):
+	        for k, v in SogouTCE_kv.items():
+	            # 只加载id为81，79和91的数据
+	            if re.search(k, u, re.IGNORECASE) and v in (81, 79, 91):
+	                #保存url对应的content内容
+	                x.append(content[index])
+	                y.append(v)
+	
+	    return x,y
+	   
+#文档分类
+##数据文件格式
+fasttext对训练和测试的数据格式有一定的要求，数据文件和标签文件要合并到一个文件里面。文件中的每一行代表一条记录，同时每条记录的最后标记对应的标签。默认情况下标签要以\_\_label\_\_开头,比如：
+
+	这是一条测试数据	__label__1
+python下实现合并数据文件和标签文件的功能非常简单。
+
+	def dump_file(x,y,filename):
+	    with open(filename, 'w') as f:
+	        for i,v in enumerate(x):
+	            line="%s __label__%d\n" % (v,y[i])
+	            f.write(line)
+	        f.close()
+	        
+加载数据清洗后的数据和标签，随机划分成训练数据和测试数据，其中测试数据占20%。
+
+	SogouTCE_kv=load_SogouTCE()
+	x,y=load_selecteddata(SogouTCE_kv)
+	# 分割训练集和测试集
+	x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+	
+按照fasttext的格式要求保存成训练数据和测试数据。
+
+    #按照fasttest的要求生成训练数据和测试数据
+    dump_file(x_train,y_train,"../data/sougou_train.txt")
+    dump_file(x_test, y_test, "../data/sougou_test.txt")
+    
+查看训练数据文件的内容，举例如下：
+
+	２ ０ １ ２ 款 长安 标致 雪铁龙 Ｄ Ｓ ４ ／ Ｄ Ｓ ５ 九寨沟 试驾
+	 __label__79
+	 
+## 训练模型
+下面开始训练fasttext模型。
+
+
+	# train_supervised uses the same arguments and defaults as the fastText cli
+	    model = train_supervised(
+	        input="../data/sougou_train.txt", epoch=25, lr=0.6, wordNgrams=2, verbose=2, minCount=1
+	    )
+
+其中比较重要的几个参数的含义为：
+
+- input；表示训练数据文件的路径
+- epoch：表示训练的次数
+- lr：表示初始的学习速率
+- wordNgrams：表示n-gram的值，一般使用2，表示2-gram
+- minCount：表示参与计算的单词的最小出现次数。
+
+## 验证效果
+fasttext默认情况下会计算对应的准确率和召回率。
+
+	def print_results(N, p, r):
+	    print("N\t" + str(N))
+	    print("P@{}\t{:.3f}".format(1, p))
+	    print("R@{}\t{:.3f}".format(1, r))
+	    
+使用测试数据文件进行校验。
+
+	print_results(*model.test("../data/sougou_test.txt"))
+	
+运行程序，显示加载了76M的单词，其中包含260184的单词组合，标记类型一共3种。
+
+	Read 76M words
+	Number of words:  260184
+	Number of labels: 3
+
