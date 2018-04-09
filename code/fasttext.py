@@ -100,7 +100,7 @@ def do_mlp(x,y):
                         hidden_layer_sizes=(5, 3),
                         random_state=1)
 
-    scores = cross_val_score(clf, x, y, cv = 5,scoring='f1')
+    scores = cross_val_score(clf, x, y, cv = 5,scoring='f1_micro')
     #print scores
     print("f1: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
@@ -122,12 +122,18 @@ if __name__ == '__main__':
     x = transformer.fit_transform(vectorizer.fit_transform(x))
 
     #转换成one hot编码
-    y=np.array(y)
-    y[y==79]=0
-    y[y == 81] = 1
-    y[y == 91] = 2
+    t=[]
+    for i in y:
+        if i == 79:
+            t.append(0)
 
-    y=to_categorical(y, num_classes=3)
+        if i == 81:
+            t.append(1)
+
+        if i == 91:
+            t.append(2)
+
+    y=to_categorical(t, num_classes=3)
     #ohe = OneHotEncoder()
     #y=ohe.fit_transform(y).toarray()
 
