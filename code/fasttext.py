@@ -9,6 +9,12 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 
 from sklearn.neural_network import MLPClassifier
+from sklearn import feature_extraction
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import CountVectorizer
+
+from keras.utils import to_categorical
+from sklearn.preprocessing import OneHotEncoder
 
 
 def load_SogouTCE():
@@ -91,7 +97,7 @@ def do_mlp(x,y):
     #mlp
     clf = MLPClassifier(solver='lbfgs',
                         alpha=1e-5,
-                        hidden_layer_sizes=(5, 2),
+                        hidden_layer_sizes=(5, 3),
                         random_state=1)
 
     scores = cross_val_score(clf, x, y, cv = 5,scoring='f1')
@@ -107,12 +113,27 @@ if __name__ == '__main__':
 
     #labels=load_url(SogouTCE_kv)
 
-    x,y=load_selecteddata(SogouTCE_kv)
+    #x,y=load_selecteddata(SogouTCE_kv)
 
+    #切割词袋
+    #vectorizer = CountVectorizer()
+    # 该类会统计每个词语的tf-idf权值
+    #transformer = TfidfTransformer()
+    #x = transformer.fit_transform(vectorizer.fit_transform(x))
 
+    #转换成one hot编码
+    #y=to_categorical(y, num_classes=3)
+    #ohe = OneHotEncoder()
+    #y=ohe.fit_transform(y).toarray()
+
+    #print y
+
+    #do_mlp(x,y)
 
     # 分割训练集和测试集
     #x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+
+
 
     #按照fasttest的要求生成训练数据和测试数据
     #dump_file(x_train,y_train,"../data/sougou_train.txt")
