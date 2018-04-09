@@ -113,22 +113,27 @@ if __name__ == '__main__':
 
     #labels=load_url(SogouTCE_kv)
 
-    #x,y=load_selecteddata(SogouTCE_kv)
+    x,y=load_selecteddata(SogouTCE_kv)
 
     #切割词袋
-    #vectorizer = CountVectorizer()
+    vectorizer = CountVectorizer()
     # 该类会统计每个词语的tf-idf权值
-    #transformer = TfidfTransformer()
-    #x = transformer.fit_transform(vectorizer.fit_transform(x))
+    transformer = TfidfTransformer()
+    x = transformer.fit_transform(vectorizer.fit_transform(x))
 
     #转换成one hot编码
-    #y=to_categorical(y, num_classes=3)
+    y=np.array(y)
+    y[y==79]=0
+    y[y == 81] = 1
+    y[y == 91] = 2
+
+    y=to_categorical(y, num_classes=3)
     #ohe = OneHotEncoder()
     #y=ohe.fit_transform(y).toarray()
 
-    #print y
+    print y
 
-    #do_mlp(x,y)
+    do_mlp(x,y)
 
     # 分割训练集和测试集
     #x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
