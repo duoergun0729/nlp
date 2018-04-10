@@ -109,37 +109,13 @@ def do_mlp(x,y):
     print("accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 if __name__ == '__main__':
-    SogouTCE_kv=load_SogouTCE()
+    #SogouTCE_kv=load_SogouTCE()
 
     #labels=load_url(SogouTCE_kv)
 
-    x,y=load_selecteddata(SogouTCE_kv)
+    #x,y=load_selecteddata(SogouTCE_kv)
 
-    #切割词袋
-    vectorizer = CountVectorizer()
-    # 该类会统计每个词语的tf-idf权值
-    transformer = TfidfTransformer()
-    x = transformer.fit_transform(vectorizer.fit_transform(x))
 
-    #转换成one hot编码
-    t=[]
-    for i in y:
-        if i == 79:
-            t.append(0)
-
-        if i == 81:
-            t.append(1)
-
-        if i == 91:
-            t.append(2)
-
-    y=to_categorical(t, num_classes=3)
-    #ohe = OneHotEncoder()
-    #y=ohe.fit_transform(y).toarray()
-
-    print y
-
-    do_mlp(x,y)
 
     # 分割训练集和测试集
     #x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
@@ -153,6 +129,6 @@ if __name__ == '__main__':
     # train_supervised uses the same arguments and defaults as the fastText cli
     model = train_supervised(
         input="../data/sougou_train.txt",
-        epoch=25, lr=0.9, wordNgrams=2, verbose=2, minCount=2
+        epoch=25, lr=0.9, wordNgrams=2, verbose=2, minCount=1
     )
     print_results(*model.test("../data/sougou_test.txt"))
