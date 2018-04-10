@@ -116,7 +116,7 @@ if __name__ == '__main__':
     x,y=load_selecteddata(SogouTCE_kv)
 
     #切割词袋
-    vectorizer = CountVectorizer(ngram_range=(2,2))
+    vectorizer = CountVectorizer(ngram_range=(2,2),max_features=5000)
     # 该类会统计每个词语的tf-idf权值
     transformer = TfidfTransformer()
     x = transformer.fit_transform(vectorizer.fit_transform(x))
