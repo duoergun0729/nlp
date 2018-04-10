@@ -1,10 +1,10 @@
-#fasttext原理
+# fasttext原理
 fasttext提供了一种有效且快速的方式生成词向量以及进行文档分类。
 fasttext模型输入一个词的序列，输出这个词序列属于不同类别的概率。fasttext模型架构和Word2Vec中的CBOW模型很类似。不同之处在于，fasttext预测标签，而CBOW模型预测中间词。fasttext设计的初衷就是为了作为一个文档分类器，副产品是也生成了词向量。
 ![使用fasttext进行文档分类-图2](picture/使用fasttext进行文档分类-图2.png)
 
-#fasttext特性
-##n-gram
+# fasttext特性
+## n-gram
 在词袋模型中，把单词当做独立的个体，没有考虑词前后的关系。比如"我打你"和“你打我“，使用词袋模型的话，这两句话是完全一样的。
 词袋的特征为：
 
@@ -27,24 +27,24 @@ n-gram是对词袋模型的一种改善，它会关注一个单词的前后关�
 	[0,0,1,1]
 
 与Word2Vec使用词袋模型不同，fasttext使用了n-gram模型，因此fasttext可以更有效的表达词前后的之间的关系。
-##高效率
+## 高效率
 fasttext在使用标准多核CPU的情况下10分钟内处理超过10亿个词汇，特别是与深度模型对比，fastText能将训练时间由数天缩短到几秒钟。使用一个标准多核CPU，得到了在10分钟内训练完超过10亿词汇量模型的结果。
 
-#安装fasttext
+# 安装fasttext
 fasttext的安装非常简便，直接从github上同步最新的代码并进行安装即可。
 
 	$ git clone https://github.com/facebookresearch/fastText.git
 	$ cd fastText
 	$ pip install .
 
-#预训练模型
+# 预训练模型
 facebook已经基于其收集的海量语料，训练好了fasttext的词向量模型，目前已经支持了150多种语言。有需要的读者可以直接下载并使用，对应的链接为：
 
 	https://github.com/facebookresearch/fastText/blob/master/docs/crawl-vectors.md
 	
 ![使用fasttext进行文档分类](picture/使用fasttext进行文档分类-图1.png)
 
-#数据集
+# 数据集
 数据集依然使用搜狗实验室提供的"搜狐新闻数据"，该数据来自搜狐新闻2012年6月—7月期间国内，国际，体育，社会，娱乐等18个频道的新闻数据，提供URL和正文信息。
 对应的网址为：
 
@@ -82,7 +82,7 @@ facebook已经基于其收集的海量语料，训练好了fasttext的词向量�
 	http://www.xinhuanet.com/olympics/	奥运
 	http://www.xinhuanet.com/society	社会
 
-#数据清洗
+# 数据清洗
 搜狐新闻数据的文件默认编码格式为gb18030，因此解压缩后要线转换成utf-8格式。
 
 	tar -zxvf news_sohusite_xml.full.tar.gz
@@ -238,8 +238,8 @@ content是中文内容，需要使用jieba进行切词，可以把切词的动�
 	
 	    return x,y
 	   
-#文档分类
-##数据文件格式
+# 文档分类
+## 数据文件格式
 fasttext对训练和测试的数据格式有一定的要求，数据文件和标签文件要合并到一个文件里面。文件中的每一行代表一条记录，同时每条记录的最后标记对应的标签。默认情况下标签要以\_\_label\_\_开头,比如：
 
 	这是一条测试数据	__label__1
