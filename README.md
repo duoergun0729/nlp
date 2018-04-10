@@ -23,6 +23,7 @@
 - [词袋模型和TFIDF模型](词袋模型和TFIDF模型.md)
 - [Word2Vec模型和Doc2Vec模型](Word2Vec模型和Doc2Vec模型.md)
 - [自己动手训练word2vec模型](自己动手训练word2vec模型.md)
+- [使用多层感知机进行文档分类](使用多层感知机进行文档分类.md)
 - [使用fasttext进行文档分类](使用fasttext进行文档分类.md)
 
 
@@ -40,6 +41,6 @@
 
 <img src="打赏.png" width = "200"  alt="打赏" align=center />
 
-如果您更喜欢知识星球这种形式，如果您对AI安全非常感兴趣，可以加入我的知识星球,AI安全相关的问题也可以在星球里面提问。
+如果您更喜欢知识星球这种形式，可以加入我的知识星球,NLP相关的问题也可以在星球里面提问。
 
 <img src="知识星球.png" width = "200"  alt="知识星球" align=center />
