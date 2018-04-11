@@ -17,6 +17,12 @@ from keras.utils import to_categorical
 from sklearn.preprocessing import OneHotEncoder
 
 
+def load_stopwords():
+    with open("stopwords.txt") as F:
+        stopwords=F.readlines()
+        F.close()
+    return [word.strip() for word in stopwords]
+
 def load_SogouTCE():
     SogouTCE=[]
     SogouTCE_kv = {}
@@ -68,10 +74,11 @@ def load_selecteddata(SogouTCE_kv):
     for index,u in  enumerate(url):
         for k, v in SogouTCE_kv.items():
             # 只加载id为81，79和91的数据,同时注意要过滤掉内容为空的
-            if re.search(k, u, re.IGNORECASE) and v in (81, 79, 91) and len(content[index].strip()) > 1:
+            if re.search(k, u, re.IGNORECASE) and v in (81,79, 91) and len(content[index].strip()) > 1:
                 #保存url对应的content内容
                 x.append(content[index])
                 y.append(v)
+                continue
 
     return x,y
 
@@ -109,22 +116,23 @@ def do_mlp(x,y):
     print("accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 if __name__ == '__main__':
-    #SogouTCE_kv=load_SogouTCE()
+    SogouTCE_kv=load_SogouTCE()
 
     #labels=load_url(SogouTCE_kv)
 
-    #x,y=load_selecteddata(SogouTCE_kv)
+    x,y=load_selecteddata(SogouTCE_kv)
 
+    stopwords=load_stopwords()
 
+    #切割token
+    x=[  [word for word in line.split() if word not in stopwords]   for line in x]
 
     # 分割训练集和测试集
-    #x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
-
-
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 
     #按照fasttest的要求生成训练数据和测试数据
-    #dump_file(x_train,y_train,"../data/sougou_train.txt")
-    #dump_file(x_test, y_test, "../data/sougou_test.txt")
+    dump_file(x_train,y_train,"../data/sougou_train.txt")
+    dump_file(x_test, y_test, "../data/sougou_test.txt")
 
     # train_supervised uses the same arguments and defaults as the fastText cli
     model = train_supervised(
