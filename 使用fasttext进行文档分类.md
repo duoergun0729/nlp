@@ -238,6 +238,40 @@ content是中文内容，需要使用jieba进行切词，可以把切词的动�
 	
 	    return x,y
 	   
+## 删除停用词
+在处理中文语料时，需要删除停用词。所谓停用词就是对理解中文含义没有明显作用的哪些单词，常见的停用词举例如下：
+
+	一一  
+	一下  
+	一个  
+	一些  
+	一何  
+	一切  
+	一则  
+	一则通过  
+	一天  
+	一定  
+	一方面  
+	一旦  
+	一时 
+
+另外所有的字母和数字还有标点符号也可以作为停用词。我们把停用词保存在一个文本文件里面便于配置使用。
+定义加载停用词的函数。
+
+	def load_stopwords():
+	    with open("stopwords.txt") as F:
+	        stopwords=F.readlines()
+	        F.close()
+	    return [word.strip() for word in stopwords]
+	    
+使用停用词过滤之前提取的文本内容。
+
+
+    stopwords=load_stopwords()
+
+    #切割token
+    x=[  [word for word in line.split() if word not in stopwords]   for line in x]
+    
 # 文档分类
 ## 数据文件格式
 fasttext对训练和测试的数据格式有一定的要求，数据文件和标签文件要合并到一个文件里面。文件中的每一行代表一条记录，同时每条记录的最后标记对应的标签。默认情况下标签要以\_\_label\_\_开头,比如：
@@ -298,14 +332,15 @@ fasttext默认情况下会计算对应的准确率和召回率。
 
 	print_results(*model.test("../data/sougou_test.txt"))
 	
-运行程序，显示加载了76M的单词，其中包含260184的单词组合，标记类型一共3种。
+运行程序，显示加载了36M的单词，其中包含288770的单词组合，标记类型一共3种。
 
-	Read 76M words
-	Number of words:  260184
+	Read 36M words
+	Number of words:  288770
 	Number of labels: 3
 
-验证效果如下所示，准确率为48.2%，召回率为48.2%，对应的F1计算为48.2%。
+验证效果如下所示，准确率为99.0%，召回率为99.0%，对应的F1计算为99.0%，效果非常不错。
 
+	Progress: 100.0% words/sec/thread:  626183 lr:  0.000000 loss:  0.005640 ETA:   0h 0m 
 	N	71107
-	P@1	0.482
-	R@1	0.482
+	P@1	0.990
+	R@1	0.990
