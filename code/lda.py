@@ -59,14 +59,15 @@ if __name__ == '__main__':
     # 利用LDA做主题分类的情况
     print "LDA"
 
-    num_topics=6
+    num_topics=50
 
     lda = models.ldamodel.LdaModel(corpus=texts, id2word=dictionary, num_topics=num_topics)
 
     #print lda.print_topics(num_topics=num_topics, num_words=4)
 
-    for topic in lda.print_topics(num_topics=num_topics, num_words=10):
-        print topic[1]
+    #打印前10个主题
+    for index,topic in lda.print_topics(10):
+        print topic
 
 
 
