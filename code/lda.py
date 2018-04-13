@@ -33,9 +33,29 @@ def load_sougou_content():
         F.close()
     return content
 
+def test_bow():
+    content=[
+        ["你","爱","我"],["我","爱","她"]
+    ]
 
-if __name__ == '__main__':
+    test=["你","爱","她"]
 
+    # 得到文档-单词矩阵 （直接利用统计词频得到特征）
+    dictionary = corpora.Dictionary(content)
+
+    # 将dictionary转化为一个词袋，得到文档-单词矩阵
+    texts = [dictionary.doc2bow(text) for text in content]
+
+    texts=np.array(texts)
+
+    print texts
+
+    test=dictionary.doc2bow(text)
+
+    print test
+
+
+def do_lda():
     #加载搜狗新闻数据
     content=load_sougou_content()
 
@@ -57,17 +77,45 @@ if __name__ == '__main__':
 
 
     # 利用LDA做主题分类的情况
-    print "LDA"
+    #print "BOW&LDA"
 
-    num_topics=50
+    #num_topics=5
 
-    lda = models.ldamodel.LdaModel(corpus=texts, id2word=dictionary, num_topics=num_topics)
+    #ldamulticore
+    #lda = models.ldamodel.LdaModel(corpus=texts, id2word=dictionary, num_topics=num_topics)
+    #lda = models.ldamodel.ldamulticore(corpus=texts, id2word=dictionary, num_topics=num_topics)
+
+    #print lda.print_topics(num_topics=num_topics, num_words=4)
+
+    #打印前5个主题
+    #for index,topic in lda.print_topics(5):
+    #    print topic
+
+    # 利用TFIDF&LDA做主题分类的情况
+    print "TFIDF&LDA"
+
+    num_topics=5
+
+    lda = models.ldamodel.LdaModel(corpus=texts_tf_idf, id2word=dictionary, num_topics=num_topics)
 
     #print lda.print_topics(num_topics=num_topics, num_words=4)
 
     #打印前10个主题
-    for index,topic in lda.print_topics(10):
+    for index,topic in lda.print_topics(5):
         print topic
+
+    #获取预料对应的LDA特征
+    corpus_lda = lda[texts_tf_idf]
+
+    #for doc_tfidf in corpus_lda:
+    #    print(doc_tfidf)
+    print corpus_lda[0]
+
+if __name__ == '__main__':
+
+    #test_bow()
+
+    do_lda()
 
 
 
