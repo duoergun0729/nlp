@@ -20,6 +20,8 @@ from gensim import corpora, models,similarities
 from simhash import Simhash
 import math
 
+from scipy import sparse
+
 
 def load_stopwords():
     with open("stopwords.txt") as F:
@@ -36,7 +38,7 @@ def load_sougou_content():
         F.close()
     return content
 
-
+#SparseMatrixSimilarity计算余弦距离
 def gensim_sim(content,test_news):
     # 加载积累的stopwords
     stopwords = load_stopwords()
@@ -147,11 +149,10 @@ if __name__ == '__main__':
     test_news=content[88]
     print test_news
 
-    #gensim_sim(content, test_news)
+    print "使用余弦计算相似度"
+    gensim_sim(content, test_news)
 
     #print "simhash"
     #gensim_simhash(content, test_news)
 
-    print "cos"
-    gensim_cos(content, test_news)
 
