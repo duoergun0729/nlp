@@ -11,6 +11,7 @@
 - [使用LDA进行文档主题建模](使用LDA进行文档主题建模.md)
 - [使用Jieba进行中文词性标注](使用Jieba进行中文词性标注.md)
 - [使用TextRank和TFIDF进行关键字自动提取](使用TextRank和TFIDF进行关键字自动提取.md)
+- [文档相似度](文档相似度.md)
 
 # NLP应用案例
 
