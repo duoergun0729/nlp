@@ -49,7 +49,7 @@ def load_reviews(filename):
     ###
     #开发阶段读取前10000行
     df = pd.read_csv(filename,sep=',',header=0,nrows=10000)
-    #print df.head()
+    print df.head()
 
     #按照列名直接获取数据 把 list转换成list对象
     text=list(df['text'])
@@ -130,7 +130,7 @@ def do_keras_mlp(text,stars):
     #在 scikit-learn 中使用 Keras 的模型,我们必须使用 KerasClassifier 进行包装。这个类起到创建并返回我们的神经网络模型的作用。
     # 它需要传入调用 fit()所需要的参数,比如迭代次数和批处理大小。
     # 最新接口指定训练的次数为epochs
-    clf = KerasClassifier(build_fn=baseline_model, epochs=20, batch_size=32, verbose=0)
+    clf = KerasClassifier(build_fn=baseline_model, epochs=20, batch_size=128, verbose=1)
 
     #使用5折交叉验证
     scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='f1_micro')
