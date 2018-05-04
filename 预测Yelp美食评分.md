@@ -177,6 +177,8 @@ RuntimeError: Python is not installed as a framework. The Mac OS X backend will 
 	x = transformer.fit_transform(vectorizer.fit_transform(text))
 
 
+
+
 # 使用MLP进行情感分析
 
 MLP是多层感知机的简写，是最简单的深度神经网络结构。我们构造一个双层的MLP，第一层隐藏层的结点数为5，第二层为2.
@@ -263,9 +265,39 @@ keras也支持打印模型。
     </tr>      
 </table>
 
+# 使用SVM进行情感分析
+在深度学习出现之前，SVM和朴素贝叶斯经常用于文本分类领域，我们以SVM为例。实例化SVM分类器，并使用5折验证法，考核F1值。
 
+	clf = SVC()
+    # 使用5折交叉验证
+    scores = cross_val_score(clf, x, y, cv=5, scoring='f1_micro')
+    # print scores
+    print("f1_micro: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
+在样本数为10000，特征数取5000的前提下，结果如下所示，可见在本数据集下特征提取方式对结果影响不大。
 
+<table>
+    <tr>
+        <td>特征提取方式</td>
+        <td>F1值</td>
+    </tr>
+    <tr>
+        <td>词袋</td>
+        <td>0.82</td>
+    </tr>
+    <tr>
+        <td>2-gram</td>
+        <td>0.82</td>
+    </tr>
+    <tr>
+        <td>词袋&TF-IDF</td>
+        <td>0.82</td>
+    </tr> 
+    <tr>
+        <td>2-gram&TF-IDF</td>
+        <td>0.82</td>
+    </tr>      
+</table>
 
 # 参考文献
 

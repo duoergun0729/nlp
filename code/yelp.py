@@ -20,6 +20,8 @@ from sklearn.model_selection import KFold,StratifiedKFold
 
 from keras import metrics
 
+from sklearn.svm import SVC
+
 #兼容在没有显示器的GPU服务器上运行该代码
 import matplotlib
 matplotlib.use('Agg')
@@ -31,9 +33,9 @@ from keras.utils import plot_model
 
 
 #yelp评论文件路径 已经使用https://github.com/Yelp/dataset-examples处理成CSV格式
-yelp_file="/Volumes/maidou/dataset/yelp/dataset/review.csv"
+#yelp_file="/Volumes/maidou/dataset/yelp/dataset/review.csv"
 
-#yelp_file="/mnt/nlp/dataset/review.csv"
+yelp_file="/mnt/nlp/dataset/review.csv"
 
 
 #词袋模型的最大特征束
@@ -82,7 +84,30 @@ def load_reviews(filename):
 
     return text,stars
 
+#实用SVM进行文档分类
+def do_svm(text,stars):
+    # 切割词袋 删除英文停用词
+    #vectorizer = CountVectorizer(ngram_range=(2, 2), max_features=max_features,stop_words='english',lowercase=True)
+    vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=max_features, stop_words='english', lowercase=True)
+    #vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=5000, stop_words=None, lowercase=True)
 
+    print "vectorizer 参数:"
+    print vectorizer
+    # 该类会统计每个词语的tf-idf权值
+    transformer = TfidfTransformer()
+    # 使用2-gram和TFIDF处理
+    x = transformer.fit_transform(vectorizer.fit_transform(text))
+    #x = vectorizer.fit_transform(text)
+
+    #二分类 标签直接实用stars
+    y=stars
+
+    clf = SVC()
+
+    # 使用5折交叉验证
+    scores = cross_val_score(clf, x, y, cv=5, scoring='f1_micro')
+    # print scores
+    print("f1_micro: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 #使用keras的MLP
 def do_keras_mlp(text,stars):
@@ -150,6 +175,8 @@ if __name__ == '__main__':
     #plt.show()
     plt.savefig("yelp_sentiment_stars.png")
 
-    #do_mlp(text,stars)
-    do_keras_mlp(text,stars)
-    #print stars
+
+    #使用MLP文档分类
+    #do_keras_mlp(text,stars)
+    #使用SVM文档分类
+    do_svm(text,stars)
