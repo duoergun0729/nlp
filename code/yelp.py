@@ -20,6 +20,8 @@ from sklearn.model_selection import KFold,StratifiedKFold
 
 from keras import metrics
 
+import matplotlib.pyplot as plt
+
 
 #yelp评论文件路径 已经使用https://github.com/Yelp/dataset-examples处理成CSV格式
 yelp_file="/Volumes/maidou/dataset/yelp/dataset/review.csv"
@@ -57,6 +59,19 @@ def load_reviews(filename):
 
     #显示各个评分的个数
     print df.describe()
+
+    #绘图
+    plt.figure()
+    count_classes=pd.value_counts(df['stars'],sort=True)
+
+    print "各个star的总数:"
+    print count_classes
+    count_classes.plot(kind='bar',rot=0)
+    plt.xlabel('stars')
+    plt.ylabel('stars counts')
+    #plt.show()
+    plt.savefig("yelp_stars.png")
+
 
     return text,stars
 

@@ -77,7 +77,7 @@ pandas的可以配置的参数非常多，其中比较重要的几个含义如�
     #显示各个评分的个数
     print df.describe()
 
-分布结果如下，一共有10000个评分，最高分5分，最低1分，平均得分为3.74，50%的人打分不大于4分。
+分布结果如下，一共有10000个评分，最高分5分，最低1分，平均得分为3.74。
 
 
 	              funny         stars        useful          cool
@@ -89,6 +89,47 @@ pandas的可以配置的参数非常多，其中比较重要的几个含义如�
 	50%        0.000000      4.000000      1.000000      0.000000
 	75%        1.000000      5.000000      2.000000      1.000000
 	max       46.000000      5.000000     95.000000     43.000000
+
+
+pandas下面分析数据的分布非常方便，而且可以支持可视化。以分析stars评分的分布为例，首先按照stars评分统计各个评分的个数。
+	
+	#绘图
+	plt.figure()
+	count_classes=pd.value_counts(df['stars'],sort=True)
+	
+然后使用pandas的内置函数进行绘图，横轴是stars评分，纵轴是对应的计数。
+			
+	print "各个star的总数:"
+	print count_classes
+	count_classes.plot(kind='bar',rot=0)
+	plt.xlabel('stars')
+	plt.ylabel('stars counts')
+	plt.savefig("yelp_stars.png")
+    
+
+在Mac系统下运行可能会有如下报错。
+
+>
+RuntimeError: Python is not installed as a framework. The Mac OS X backend will not be able to function correctly if Python is not installed as a framework. See the Python documentation for more information on installing Python as a framework on Mac OS X. Please either reinstall Python as a framework, or try one of the other backends. If you are using (Ana)Conda please install python.app and replace the use of ‘python‘ with ‘pythonw‘. See ‘Working with Matplotlib on OSX‘ in the Matplotlib FAQ for more information.
+
+处理方式为：
+
+- 打开终端，输入cd ~/.matplotlib
+- 新建文件vi matplotlibrc
+- 文件中添加内容 backend: TkAgg
+
+再次运行程序，得到可视化的图表，可以发现大多数人倾向打4-5分。
+
+![预测Yelp美食评分-图1.png](picture/预测Yelp美食评分-图1.png)
+
+各个评分的具体计数分别为：
+
+	各个star的总数:
+	5    3555
+	4    2965
+	3    1716
+	2     891
+	1     873
 
 # 参考文献
 
