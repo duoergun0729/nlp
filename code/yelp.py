@@ -87,8 +87,8 @@ def load_reviews(filename):
 #使用keras的MLP
 def do_keras_mlp(text,stars):
     # 切割词袋 删除英文停用词
-    vectorizer = CountVectorizer(ngram_range=(2, 2), max_features=max_features,stop_words='english',lowercase=True)
-    #vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=max_features, stop_words='english', lowercase=True)
+    #vectorizer = CountVectorizer(ngram_range=(2, 2), max_features=max_features,stop_words='english',lowercase=True)
+    vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=max_features, stop_words='english', lowercase=True)
     #vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=5000, stop_words=None, lowercase=True)
 
     print "vectorizer 参数:"
