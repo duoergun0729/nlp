@@ -20,7 +20,14 @@ from sklearn.model_selection import KFold,StratifiedKFold
 
 from keras import metrics
 
+#兼容在没有显示器的GPU服务器上运行该代码
+import matplotlib
+matplotlib.use('Agg')
+
+
 import matplotlib.pyplot as plt
+from keras.utils import plot_model
+
 
 
 #yelp评论文件路径 已经使用https://github.com/Yelp/dataset-examples处理成CSV格式
@@ -75,47 +82,13 @@ def load_reviews(filename):
 
     return text,stars
 
-#使用sklearnr的mlp
-def do_mlp(text,stars):
 
-    # 切割词袋 删除英文停用词
-    vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=5000,stop_words='english',lowercase=True)
-    #vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=5000, stop_words=None, lowercase=True)
-
-    print "vectorizer 参数:"
-    print vectorizer
-    # 该类会统计每个词语的tf-idf权值
-    transformer = TfidfTransformer()
-    # 使用2-gram和TFIDF处理
-    x = transformer.fit_transform(vectorizer.fit_transform(text))
-    #x = vectorizer.fit_transform(text)
-
-    #使用one-hot编码处理
-    #print stars
-    y = LabelEncoder().fit_transform(stars)
-    y=np_utils.to_categorical(y)
-
-    #print y
-
-    # mlp
-    clf = MLPClassifier(solver='lbfgs',
-                        alpha=1e-5,
-                        hidden_layer_sizes=(10, 5),
-                        random_state=1)
-
-    #使用5折交叉验证
-    scores = cross_val_score(clf, x, y, cv=5, scoring='f1_micro')
-    # print scores
-    print("f1: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-
-    scores = cross_val_score(clf, x, y, cv=5, scoring='accuracy')
-    # print scores
-    print("accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 #使用keras的MLP
 def do_keras_mlp(text,stars):
     # 切割词袋 删除英文停用词
-    vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=max_features,stop_words='english',lowercase=True)
+    vectorizer = CountVectorizer(ngram_range=(2, 2), max_features=max_features,stop_words='english',lowercase=True)
+    #vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=max_features, stop_words='english', lowercase=True)
     #vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=5000, stop_words=None, lowercase=True)
 
     print "vectorizer 参数:"
@@ -135,31 +108,47 @@ def do_keras_mlp(text,stars):
     #构造神经网络
     def baseline_model():
         model = Sequential()
-        model.add(Dense(10, input_dim=max_features, activation='relu'))
+        model.add(Dense(5, input_dim=max_features, activation='relu'))
         model.add(Dropout(0.2))
-        model.add(Dense(5, activation='softmax'))
+        model.add(Dense(2, activation='softmax'))
         # Compile model
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        #可视化
+        #plot_model(model, to_file='yelp-mlp-model.png',show_shapes=True)
+
+        #model.summary()
 
         return model
     #在 scikit-learn 中使用 Keras 的模型,我们必须使用 KerasClassifier 进行包装。这个类起到创建并返回我们的神经网络模型的作用。
     # 它需要传入调用 fit()所需要的参数,比如迭代次数和批处理大小。
     # 最新接口指定训练的次数为epochs
-    clf = KerasClassifier(build_fn=baseline_model, epochs=20, batch_size=128, verbose=1)
+    clf = KerasClassifier(build_fn=baseline_model, epochs=20, batch_size=128, verbose=0)
 
     #使用5折交叉验证
     scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='f1_micro')
     # print scores
     print("f1_micro: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
-    scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='accuracy')
+    #scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='accuracy')
     # print scores
-    print("accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+    #print("accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 
 if __name__ == '__main__':
 
     text,stars=load_reviews(yelp_file)
+
+    stars=[ 0 if star < 3 else 1 for star in stars ]
+
+    print "情感分类的总数:"
+    count_classes = pd.value_counts(stars, sort=True)
+    print count_classes
+    count_classes.plot(kind='bar',rot=0)
+    plt.xlabel('sentiment ')
+    plt.ylabel('sentiment  counts')
+    #plt.show()
+    plt.savefig("yelp_sentiment_stars.png")
 
     #do_mlp(text,stars)
     do_keras_mlp(text,stars)

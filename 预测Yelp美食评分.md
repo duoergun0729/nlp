@@ -131,6 +131,142 @@ RuntimeError: Python is not installed as a framework. The Mac OS X backend will 
 	2     891
 	1     873
 
+
+在进行情感分析的时候，通常可以把3分及其以上的认为是积极，标记为1，1-2分认为是消极，标记为0。
+
+	stars=[ 0 if star < 3 else 1 for star in stars ]
+
+经过处理后，统计情感分类的结果。
+
+    print "情感分类的总数:"
+    count_classes = pd.value_counts(stars, sort=True)
+    print count_classes
+
+结果显示，积极的占将近80%。
+
+	情感分类的总数:
+	1    8236
+	0    1764
+
+可视化情感分类的数据，结果如下。
+
+![预测Yelp美食评分-图3.png](picture/预测Yelp美食评分-图3.png)
+
+
+# 特征提取
+
+## 词袋模型
+
+最简单的一种特征提取方式就是词袋模型，scikit-learn下有完整的封装。
+	
+	# 切割词袋 删除英文停用词
+	vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=max_features,stop_words='english',lowercase=True)
+
+词袋模型的一种变形就是ngram，提取的特征是相邻的若干单词，最常见的就是2-gram，表示前后两个单词，在scikit-learn的实现为：
+
+	# 切割词袋 删除英文停用词
+	vectorizer = CountVectorizer(ngram_range=(2, 2), max_features=max_features,stop_words='english',lowercase=True)
+	
+## 词袋模型结合TF-IDF模型
+
+词袋模型通常可以和TF-IDF模型一起使用，用于提升分类效果。
+	
+	# 该类会统计每个词语的tf-idf权值
+	transformer = TfidfTransformer()
+	# 使用2-gram和TFIDF处理
+	x = transformer.fit_transform(vectorizer.fit_transform(text))
+
+
+# 使用MLP进行情感分析
+
+MLP是多层感知机的简写，是最简单的深度神经网络结构。我们构造一个双层的MLP，第一层隐藏层的结点数为5，第二层为2.
+	
+	#构造神经网络
+	def baseline_model():
+	    model = Sequential()
+	    model.add(Dense(5, input_dim=max_features, activation='relu'))
+	    model.add(Dropout(0.2))
+	    model.add(Dense(2, activation='softmax'))
+	    # Compile model
+	    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+可视化MLP模型，keras下将模型可视化非常容易，内置函数即可图片化展现。
+
+	from keras.utils import plot_model
+	plot_model(model, to_file='model.png')
+
+plot_model接收两个可选参数：
+
+- show_shapes：指定是否显示输出数据的形状，默认为False
+- show\_layer\_names:指定是否显示层名称,默认为True
+
+第一次运行，可能会报错。
+
+	ImportError: Failed to import pydot. You must install pydot and graphviz for `pydotprint` to work.
+
+这是因为相关库没有及时安装，解决方法如下：
+
+	pip install pydot-ng 
+	brew install graphviz
+
+再次运行程序，可视化结果如下。
+
+![预测Yelp美食评分-图2.png](picture/预测Yelp美食评分-图2.png)
+
+keras也支持打印模型。
+
+	model.summary()
+
+输出的结果如下所示，除了显示模型的结构，还可以显示需要训练的参数信息。
+
+	_________________________________________________________________
+	Layer (type)                 Output Shape              Param #   
+	=================================================================
+	dense_3 (Dense)              (None, 5)                 25005     
+	_________________________________________________________________
+	dropout_2 (Dropout)          (None, 5)                 0         
+	_________________________________________________________________
+	dense_4 (Dense)              (None, 2)                 12        
+	=================================================================
+
+为了让验证的效果更加可信，我们使用5折交叉验证，考核分类器的F1值，训练的轮数为20。在 scikit-learn 中使用 Keras 的模型,我们必须使用 KerasClassifier 进行包装。这个类起到创建并返回我们的神经网络模型的作用。它需要传入调用 fit()所需要的参数,比如迭代次数和批处理大小。
+
+    # 最新接口指定训练的次数为epochs
+    clf = KerasClassifier(build_fn=baseline_model, epochs=20, batch_size=128, verbose=0)
+    #使用5折交叉验证
+    scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='f1_micro')
+    # print scores
+    print("f1_micro: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+在样本数为10000，特征数取5000的前提下，结果如下所示，可以看出2-gram在本数据集下没有对分类效果有改善。
+
+<table>
+    <tr>
+        <td>特征提取方式</td>
+        <td>F1值</td>
+    </tr>
+    <tr>
+        <td>词袋</td>
+        <td>0.89</td>
+    </tr>
+    <tr>
+        <td>2-gram</td>
+        <td>0.84</td>
+    </tr>
+    <tr>
+        <td>词袋&TF-IDF</td>
+        <td>0.89</td>
+    </tr> 
+    <tr>
+        <td>2-gram&TF-IDF</td>
+        <td>0.84</td>
+    </tr>      
+</table>
+
+
+
+
+
 # 参考文献
 
 - https://www.cnblogs.com/datablog/p/6127000.html
