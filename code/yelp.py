@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import pandas as pd
 import numpy as np
+import sys
 
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -27,6 +28,12 @@ from keras.layers import Embedding, LSTM
 import keras.preprocessing.text as T
 from keras.preprocessing.text import Tokenizer
 from  keras.preprocessing.sequence import pad_sequences
+
+from nltk.corpus import stopwords
+from fastText import train_supervised
+from nltk.tokenize import sent_tokenize,word_tokenize
+from nltk.corpus import wordnet
+import enchant
 
 
 #兼容在没有显示器的GPU服务器上运行该代码
@@ -173,6 +180,29 @@ def do_keras_lstm(text,stars):
     #转换成词袋序列
     max_document_length=200
 
+    #删除通用词
+    text_cleaned=[]
+
+    list_stopWords = list(set(stopwords.words('english')))
+    english_punctuations = [',', '.', ':', ';', '?', '(', ')', '[', ']', '&', '!', '*', '@', '#', '$', '%']
+    d = enchant.Dict("en_US")
+
+    for line in text:
+
+        # 分词
+        list_words = word_tokenize(line.lower())
+        # 去掉标点符号
+        list_words = [word for word in list_words if word not in english_punctuations]
+        # 实用wordnet删除非常见英文单词
+        #list_words = [word for word in list_words if wordnet.synsets(word) ]
+        #list_words = [word for word in list_words if d.check(word)]
+        # 过滤停止词
+        filtered_words = [w for w in list_words if not w in list_stopWords]
+        text_cleaned.append( " ".join(filtered_words) )
+
+
+    text=text_cleaned
+
     #设置分词最大个数 即词袋的单词个数
     tokenizer = Tokenizer(num_words=max_features,lower=True)
     tokenizer.fit_on_texts(text)
@@ -221,7 +251,57 @@ def do_keras_lstm(text,stars):
     # print scores
     #print("accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
+
+def dump_file(x,y,filename):
+    with open(filename, 'w') as f:
+        for i,v in enumerate(x):
+            line="%s __label__%d\n" % (v,y[i])
+            f.write(line)
+        f.close()
+
+def do_fasttext(text,stars):
+    #删除通用词
+    text_cleaned=[]
+
+    list_stopWords = list(set(stopwords.words('english')))
+    english_punctuations = [',', '.', ':', ';', '?', '(', ')', '[', ']', '&', '!', '*', '@', '#', '$', '%']
+    d = enchant.Dict("en_US")
+
+    for line in text:
+
+        # 分词
+        list_words = word_tokenize(line.lower())
+        # 去掉标点符号
+        list_words = [word for word in list_words if word not in english_punctuations]
+        # 实用wordnet删除非常见英文单词
+        #list_words = [word for word in list_words if wordnet.synsets(word) ]
+        #list_words = [word for word in list_words if d.check(word)]
+        # 过滤停止词
+        filtered_words = [w for w in list_words if not w in list_stopWords]
+        text_cleaned.append( " ".join(filtered_words) )
+
+    # 分割训练集和测试集 测试集占20%
+    #x_train, x_test, y_train, y_test = train_test_split(text, stars, test_size=0.2)
+    x_train, x_test, y_train, y_test = train_test_split(text_cleaned, stars, test_size=0.2)
+
+    # 按照fasttest的要求生成训练数据和测试数据
+    dump_file(x_train, y_train, "yelp_train.txt")
+    dump_file(x_test, y_test, "yelp_test.txt")
+
+    model = train_supervised(
+        input="yelp_train.txt", epoch=20, lr=0.6, wordNgrams=2, verbose=2, minCount=1
+    )
+
+    def print_results(N, p, r):
+        print("N\t" + str(N))
+        print("P@{}\t{:.3f}".format(1, p))
+        print("R@{}\t{:.3f}".format(1, r))
+
+    print_results(*model.test("yelp_test.txt"))
+
 if __name__ == '__main__':
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
 
     text,stars=load_reviews(yelp_file)
 
@@ -243,3 +323,5 @@ if __name__ == '__main__':
     do_keras_lstm(text,stars)
     #使用SVM文档分类
     #do_svm(text,stars)
+    #使用fasttext文档分类
+    #do_fasttext(text,stars)

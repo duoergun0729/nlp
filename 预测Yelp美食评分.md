@@ -220,6 +220,18 @@ Tokenizer类的示例代码如下：
 	 #截断补齐
     x=pad_sequences(sequences, maxlen=max_document_length)
 
+第一次使用nltk资源时，需要进行下载。
+
+	Python 2.7.14 |Anaconda, Inc.| (default, Mar 27 2018, 17:29:31) 
+	[GCC 7.2.0] on linux2
+	Type "help", "copyright", "credits" or "license" for more information.
+	>>> import nltk
+	>>> nltk.download('stopwords')
+	[nltk_data] Downloading package stopwords to /root/nltk_data...
+	[nltk_data]   Unzipping corpora/stopwords.zip.
+	True
+	>>> 
+
 # 使用MLP进行情感分析
 
 MLP是多层感知机的简写，是最简单的深度神经网络结构。我们构造一个双层的MLP，第一层隐藏层的结点数为5，第二层为2.
@@ -380,10 +392,81 @@ LSTM和CNN都是计算密集型的模型，在CPU上运行的速度几乎难以�
         <td>F1值</td>
     </tr>
     <tr>
-        <td>词袋序列</td>
+        <td>原始词袋序列</td>
         <td>0.84</td>
     </tr>
+    <tr>
+        <td>词袋序列+全部转换成小写</td>
+        <td>0.85</td>
+    </tr>
   
+</table>
+
+# 实用fasttext进行情感分析
+fasttext对训练和测试的数据格式有一定的要求，数据文件和标签文件要合并到一个文件里面。文件中的每一行代表一条记录，同时每条记录的最后标记对应的标签。默认情况下标签要以__label__开头,比如：
+
+	这是一条测试数据	__label__1
+	
+python下实现合并数据文件和标签文件的功能非常简单。
+
+	def dump_file(x,y,filename):
+	    with open(filename, 'w') as f:
+	        for i,v in enumerate(x):
+	            line="%s __label__%d\n" % (v,y[i])
+	            f.write(line)
+	        f.close()
+
+加载数据清洗后的数据和标签，随机划分成训练数据和测试数据，其中测试数据占20%。
+
+ 按照fasttest的要求生成训练数据和测试数据。
+ 
+    dump_file(x_train, y_train, "yelp_train.txt")
+    dump_file(x_test, y_test, "yelp_test.txt")
+
+ 使用训练数据集对应的文件进行训练。
+
+    model = train_supervised(
+        input="yelp_train.txt", epoch=20, lr=0.6, wordNgrams=2, verbose=2, minCount=1
+    )
+    
+ 在测试数据集对应的文件上进行预测。
+ 
+   	def print_results(N, p, r):
+        print("N\t" + str(N))
+        print("P@{}\t{:.3f}".format(1, p))
+        print("R@{}\t{:.3f}".format(1, r))
+    print_results(*model.test("yelp_test.txt"))
+
+在样本数为10000的前提下，结果如下所示，F1为0.866。
+
+	Read 1M words
+	Number of words:  71445
+	Number of labels: 2
+	Progress: 100.0% words/sec/thread: 1744947 lr:  0.000000 loss:  0.066168 ETA:   0h 0m
+	N       2000
+	P@1     0.866
+	R@1     0.866
+
+通过优化特征提取方式，可以进一步提升fasttext的分类性能，结果如下所示。
+
+<table>
+    <tr>
+        <td>特征提取方式</td>
+        <td>F1值</td>
+    </tr>
+    <tr>
+        <td>2-gram</td>
+        <td>0.866</td>
+    </tr>
+    <tr>
+        <td>2-gram+删除停用词</td>
+        <td>0.902</td>
+    </tr>
+    <tr>
+        <td>2-gram+删除停用词+转小写</td>
+        <td>0.908</td>
+    </tr>
+     
 </table>
 
 # 使用SVM进行情感分析
