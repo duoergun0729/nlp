@@ -176,8 +176,49 @@ RuntimeError: Python is not installed as a framework. The Mac OS X backend will 
 	# 使用2-gram和TFIDF处理
 	x = transformer.fit_transform(vectorizer.fit_transform(text))
 
+## 词袋序列模型
+词袋序列模型是在词袋模型的基础上发展而来的，相对于词袋模型，词袋序列模型可以反映出单词在句子中的前后关系。keras中通过Tokenizer类实现了词袋序列模型，这个类用来对文本中的词进行统计计数，生成文档词典，以支持基于词典位序生成文本的向量表示，创建该类时，需要设置词典的最大值。
+
+	tokenizer = Tokenizer(num_words=None)
+
+Tokenizer类的成员函数为：
+
+- fit_on_text(texts) 使用一系列文档来生成token词典，texts为list类，每个元素为一个文档。
+- texts_to_sequences(texts) 将多个文档转换为word下标的向量形式,shape为[len(texts)，len(text)] -- (文档数，每条文档的长度)
+- texts_to_matrix(texts) 将多个文档转换为矩阵表示,shape为[len(texts),num_words]
+
+Tokenizer类的示例代码如下：
 
 
+	from keras.preprocessing.text import Tokenizer
+	
+	text1='some thing to eat'
+	text2='some thing to drink'
+	texts=[text1,text2]
+	
+	tokenizer = Tokenizer(num_words=None) 
+	#num_words:None或整数,处理的最大单词数量。少于此数的单词丢掉
+	tokenizer.fit_on_texts(texts)
+	
+	# num_words=多少会影响下面的结果，行数=num_words
+	print( tokenizer.texts_to_sequences(texts)) 
+	#得到词索引[[1, 2, 3, 4], [1, 2, 3, 5]]
+	print( tokenizer.texts_to_matrix(texts))  
+	# 矩阵化=one_hot
+	[[ 0.,  1.,  1.,  1.,  1.,  0.,  0.,  0.,  0.,  0.],
+	 [ 0.,  1.,  1.,  1.,  0.,  1.,  0.,  0.,  0.,  0.]]
+
+在处理Yelp数据集时，把每条评论看成一个词袋序列，且长度固定。超过固定长度的截断，不足的使用0补齐。
+
+    #转换成词袋序列，max_document_length为序列的最大长度
+    max_document_length=200
+
+    #设置分词最大个数 即词袋的单词个数
+    tokenizer = Tokenizer(num_words=max_features)
+    tokenizer.fit_on_texts(text)
+    sequences = tokenizer.texts_to_sequences(text)
+	 #截断补齐
+    x=pad_sequences(sequences, maxlen=max_document_length)
 
 # 使用MLP进行情感分析
 
@@ -265,6 +306,86 @@ keras也支持打印模型。
     </tr>      
 </table>
 
+# 使用LSTM进行情感分析
+LSTM特别适合处理具有序列化数据，并且可以很好的自动化提炼序列前后的特征关系。当我们把Yelp数据集转换成词袋序列后，就可以尝试使用LSTM来进行处理。我们构造一个简单的LSTM结构，首先通过一个Embedding层进行降维成为128位的向量，然后使用一个核数为128的LSTM进行处理。为了防止过拟合，LSTM层和全连接层之间随机丢失20%的数据进行训练。
+
+    #构造神经网络
+    def baseline_model():
+        model = Sequential()
+        model.add(Embedding(max_features, 128))
+        model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2))
+        model.add(Dense(2, activation='softmax'))
+
+        # try using different optimizers and different optimizer configs
+        model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+
+        #可视化
+        plot_model(model, to_file='yelp-lstm-model.png',show_shapes=True)
+
+        model.summary()
+
+        return model
+
+再次运行程序，可视化结果如下。
+
+![预测Yelp美食评分-图4.png](picture/预测Yelp美食评分-图4.png)
+
+打印LSTM的结构。
+
+	model.summary()
+
+输出的结果如下所示，除了显示模型的结构，还可以显示需要训练的参数信息。
+
+	=================================================================
+	Layer (type)                 Output Shape              Param #   
+	=================================================================
+	embedding_1 (Embedding)      (None, None, 128)         640000    
+	_________________________________________________________________
+	lstm_1 (LSTM)                (None, 128)               131584    
+	_________________________________________________________________
+	dense_1 (Dense)              (None, 2)                 258       
+	=================================================================
+	Total params: 771,842
+	Trainable params: 771,842
+	Non-trainable params: 0
+	_________________________________________________________________
+	
+为了让验证的效果更加可信，我们使用5折交叉验证，考核分类器的F1值，训练的轮数为20。在 scikit-learn 中使用 Keras 的模型,我们必须使用 KerasClassifier 进行包装。这个类起到创建并返回我们的神经网络模型的作用。它需要传入调用 fit()所需要的参数,比如迭代次数和批处理大小。
+
+    # 最新接口指定训练的次数为epochs
+    clf = KerasClassifier(build_fn=baseline_model, epochs=20, batch_size=128, verbose=0)
+    #使用5折交叉验证
+    scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='f1_micro')
+    # print scores
+    print("f1_micro: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+LSTM和CNN都是计算密集型的模型，在CPU上运行的速度几乎难以接受。强烈建议实用GPU服务器进行加速，下面为使用一块Tesla P4进行加速的显示内容。
+
+	name: Tesla P4
+	major: 6 minor: 1 memoryClockRate (GHz) 1.1135
+	pciBusID 0000:00:06.0
+	Total memory: 7.43GiB
+	Free memory: 7.32GiB
+	2018-05-05 11:20:53.108858: I tensorflow/core/common_runtime/gpu/gpu_device.cc:976] DMA: 0 
+	2018-05-05 11:20:53.108869: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 0:   Y 
+	2018-05-05 11:20:53.108882: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:0) -> (device: 0, name: Tesla P4, pci bus id: 0000:00:06.0)
+
+在样本数为10000，特征数取5000的前提下，结果如下所示。
+
+<table>
+    <tr>
+        <td>特征提取方式</td>
+        <td>F1值</td>
+    </tr>
+    <tr>
+        <td>词袋序列</td>
+        <td>0.84</td>
+    </tr>
+  
+</table>
+
 # 使用SVM进行情感分析
 在深度学习出现之前，SVM和朴素贝叶斯经常用于文本分类领域，我们以SVM为例。实例化SVM分类器，并使用5折验证法，考核F1值。
 
@@ -302,3 +423,4 @@ keras也支持打印模型。
 # 参考文献
 
 - https://www.cnblogs.com/datablog/p/6127000.html
+- https://blog.csdn.net/jiaach/article/details/79403352

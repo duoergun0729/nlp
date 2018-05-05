@@ -22,6 +22,13 @@ from keras import metrics
 
 from sklearn.svm import SVC
 
+from keras.layers import Embedding, LSTM
+
+import keras.preprocessing.text as T
+from keras.preprocessing.text import Tokenizer
+from  keras.preprocessing.sequence import pad_sequences
+
+
 #兼容在没有显示器的GPU服务器上运行该代码
 import matplotlib
 matplotlib.use('Agg')
@@ -160,6 +167,60 @@ def do_keras_mlp(text,stars):
     #print("accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 
+#使用keras的LSTM
+def do_keras_lstm(text,stars):
+
+    #转换成词袋序列
+    max_document_length=200
+
+    #设置分词最大个数 即词袋的单词个数
+    tokenizer = Tokenizer(num_words=max_features,lower=True)
+    tokenizer.fit_on_texts(text)
+    sequences = tokenizer.texts_to_sequences(text)
+
+    x=pad_sequences(sequences, maxlen=max_document_length)
+
+
+    #我们可以使用从scikit-learn LabelEncoder类。
+    # 这个类通过 fit() 函数获取整个数据集模型所需的编码,然后使用transform()函数应用编码来创建一个新的输出变量。
+    encoder=LabelEncoder()
+    encoder.fit(stars)
+    encoded_y = encoder.transform(stars)
+
+
+
+    #构造神经网络
+    def baseline_model():
+        model = Sequential()
+        model.add(Embedding(max_features, 128))
+        model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2))
+        model.add(Dense(2, activation='softmax'))
+
+        # try using different optimizers and different optimizer configs
+        model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+
+        #可视化
+        plot_model(model, to_file='yelp-lstm-model.png',show_shapes=True)
+
+        model.summary()
+
+        return model
+    #在 scikit-learn 中使用 Keras 的模型,我们必须使用 KerasClassifier 进行包装。这个类起到创建并返回我们的神经网络模型的作用。
+    # 它需要传入调用 fit()所需要的参数,比如迭代次数和批处理大小。
+    # 最新接口指定训练的次数为epochs
+    clf = KerasClassifier(build_fn=baseline_model, epochs=20, batch_size=128, verbose=1)
+
+    #使用5折交叉验证
+    scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='f1_micro')
+    # print scores
+    print("f1_micro: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+    #scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='accuracy')
+    # print scores
+    #print("accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
 if __name__ == '__main__':
 
     text,stars=load_reviews(yelp_file)
@@ -178,5 +239,7 @@ if __name__ == '__main__':
 
     #使用MLP文档分类
     #do_keras_mlp(text,stars)
+    #使用lstm文档分类
+    do_keras_lstm(text,stars)
     #使用SVM文档分类
-    do_svm(text,stars)
+    #do_svm(text,stars)
