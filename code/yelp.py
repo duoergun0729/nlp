@@ -1,7 +1,11 @@
-# -*- coding: UTF-8 -*-
+#coding=utf-8
 import pandas as pd
 import numpy as np
 import sys
+
+#处理编码问题
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -34,6 +38,9 @@ from fastText import train_supervised
 from nltk.tokenize import sent_tokenize,word_tokenize
 from nltk.corpus import wordnet
 import enchant
+
+
+
 
 
 #兼容在没有显示器的GPU服务器上运行该代码
@@ -72,8 +79,8 @@ def load_reviews(filename):
     #skip_blank_lines : boolean, default True如果为True，则跳过空行；否则记为NaN。
 
     ###
-    #开发阶段读取前10000行
-    df = pd.read_csv(filename,sep=',',header=0,nrows=10000)
+    #开发阶段读取前10000行 使用encoding='utf-8'参数非常重要
+    df = pd.read_csv(filename,sep=',',header=0,encoding='utf-8',nrows=200000)
     print df.head()
 
     #按照列名直接获取数据 把 list转换成list对象
@@ -135,8 +142,8 @@ def do_keras_mlp(text,stars):
     # 该类会统计每个词语的tf-idf权值
     transformer = TfidfTransformer()
     # 使用2-gram和TFIDF处理
-    x = transformer.fit_transform(vectorizer.fit_transform(text))
-    #x = vectorizer.fit_transform(text)
+    #x = transformer.fit_transform(vectorizer.fit_transform(text))
+    x = vectorizer.fit_transform(text)
 
     #我们可以使用从scikit-learn LabelEncoder类。
     # 这个类通过 fit() 函数获取整个数据集模型所需的编码,然后使用transform()函数应用编码来创建一个新的输出变量。
@@ -162,7 +169,7 @@ def do_keras_mlp(text,stars):
     #在 scikit-learn 中使用 Keras 的模型,我们必须使用 KerasClassifier 进行包装。这个类起到创建并返回我们的神经网络模型的作用。
     # 它需要传入调用 fit()所需要的参数,比如迭代次数和批处理大小。
     # 最新接口指定训练的次数为epochs
-    clf = KerasClassifier(build_fn=baseline_model, epochs=20, batch_size=128, verbose=0)
+    clf = KerasClassifier(build_fn=baseline_model, epochs=20, batch_size=128, verbose=1)
 
     #使用5折交叉验证
     scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='f1_micro')
@@ -195,7 +202,7 @@ def do_keras_lstm(text,stars):
         list_words = [word for word in list_words if word not in english_punctuations]
         # 实用wordnet删除非常见英文单词
         #list_words = [word for word in list_words if wordnet.synsets(word) ]
-        #list_words = [word for word in list_words if d.check(word)]
+        list_words = [word for word in list_words if d.check(word)]
         # 过滤停止词
         filtered_words = [w for w in list_words if not w in list_stopWords]
         text_cleaned.append( " ".join(filtered_words) )
@@ -275,7 +282,7 @@ def do_fasttext(text,stars):
         list_words = [word for word in list_words if word not in english_punctuations]
         # 实用wordnet删除非常见英文单词
         #list_words = [word for word in list_words if wordnet.synsets(word) ]
-        #list_words = [word for word in list_words if d.check(word)]
+        list_words = [word for word in list_words if d.check(word)]
         # 过滤停止词
         filtered_words = [w for w in list_words if not w in list_stopWords]
         text_cleaned.append( " ".join(filtered_words) )
@@ -300,8 +307,7 @@ def do_fasttext(text,stars):
     print_results(*model.test("yelp_test.txt"))
 
 if __name__ == '__main__':
-    reload(sys)
-    sys.setdefaultencoding('utf-8')
+
 
     text,stars=load_reviews(yelp_file)
 

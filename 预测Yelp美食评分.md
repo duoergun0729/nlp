@@ -153,6 +153,22 @@ RuntimeError: Python is not installed as a framework. The Mac OS X backend will 
 ![预测Yelp美食评分-图3.png](picture/预测Yelp美食评分-图3.png)
 
 
+另外需要主要的是，如果数据清洗过程中出现编码错误，示例如下：
+
+	UnicodeDecodeError: 'utf8' codec can't decode byte 0xc3 in position 18: unexpected end of data
+
+遇到类似问题的解决方法是，解析CSV文件时强制使用utf8格式。
+
+	df = pd.read_csv(filename,sep=',',header=0,encoding='utf-8',nrows=200000)
+
+另外在代码文件的前几行中显示设置编码格式为utf8。
+	
+	#coding=utf-8
+	import sys
+	#处理编码问题
+	reload(sys)
+	sys.setdefaultencoding('utf-8')
+
 # 特征提取
 
 ## 词袋模型
@@ -318,6 +334,27 @@ keras也支持打印模型。
     </tr>      
 </table>
 
+适当增加训练数据量，特征数取5000的前提下，结果如下所示，可见在该测试集合下，增加数据量对F1的影响有限。
+
+<table>
+    <tr>
+        <td>样本总量</td>
+        <td>F1值</td>
+    </tr>
+    <tr>
+        <td>1w</td>
+        <td>0.89</td>
+    </tr>
+    <tr>
+        <td>10w</td>
+        <td>0.91</td>
+    </tr>    
+        <tr>
+        <td>20w</td>
+        <td>0.91</td>
+    </tr>    
+</table>
+
 # 使用LSTM进行情感分析
 LSTM特别适合处理具有序列化数据，并且可以很好的自动化提炼序列前后的特征关系。当我们把Yelp数据集转换成词袋序列后，就可以尝试使用LSTM来进行处理。我们构造一个简单的LSTM结构，首先通过一个Embedding层进行降维成为128位的向量，然后使用一个核数为128的LSTM进行处理。为了防止过拟合，LSTM层和全连接层之间随机丢失20%的数据进行训练。
 
@@ -402,7 +439,28 @@ LSTM和CNN都是计算密集型的模型，在CPU上运行的速度几乎难以�
   
 </table>
 
-# 实用fasttext进行情感分析
+适当增加训练数据量，特征数取5000，词袋序列+全部转换成小写的前提下，结果如下所示，可见在该测试集合下，增加数据量对F1的影响有限。
+
+<table>
+    <tr>
+        <td>样本总量</td>
+        <td>F1值</td>
+    </tr>
+    <tr>
+        <td>1w</td>
+        <td>0.85</td>
+    </tr>
+    <tr>
+        <td>10w</td>
+        <td></td>
+    </tr>    
+        <tr>
+        <td>20w</td>
+        <td></td>
+    </tr>    
+</table>
+
+# 使用fasttext进行情感分析
 fasttext对训练和测试的数据格式有一定的要求，数据文件和标签文件要合并到一个文件里面。文件中的每一行代表一条记录，同时每条记录的最后标记对应的标签。默认情况下标签要以__label__开头,比如：
 
 	这是一条测试数据	__label__1
@@ -469,6 +527,28 @@ python下实现合并数据文件和标签文件的功能非常简单。
      
 </table>
 
+另外，通过增加训练数据量也可以提升分类效果，在使用2-gram+删除停用词+转小写的前提下，结果如下。
+
+<table>
+    <tr>
+        <td>样本总量</td>
+        <td>F1值</td>
+    </tr>
+    <tr>
+        <td>1w</td>
+        <td>0.908</td>
+    </tr>
+    <tr>
+        <td>10w</td>
+        <td>0.921</td>
+    </tr>
+    <tr>
+        <td>20w</td>
+        <td>0.923</td>
+    </tr>
+     
+</table>
+
 # 使用SVM进行情感分析
 在深度学习出现之前，SVM和朴素贝叶斯经常用于文本分类领域，我们以SVM为例。实例化SVM分类器，并使用5折验证法，考核F1值。
 
@@ -507,3 +587,4 @@ python下实现合并数据文件和标签文件的功能非常简单。
 
 - https://www.cnblogs.com/datablog/p/6127000.html
 - https://blog.csdn.net/jiaach/article/details/79403352
+- https://blog.csdn.net/wyty88/article/details/51201766
