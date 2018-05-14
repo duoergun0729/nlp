@@ -492,7 +492,7 @@ LSTM和CNN都是计算密集型的模型，在CPU上运行的速度几乎难以�
 
 ![预测Yelp美食评分-图6.png](picture/预测Yelp美食评分-图6.png)
 
-打印LSTM的结构。
+打印CNN的结构。
 
 	model.summary()
 
