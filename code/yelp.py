@@ -39,6 +39,8 @@ from nltk.tokenize import sent_tokenize,word_tokenize
 from nltk.corpus import wordnet
 import enchant
 
+from keras.layers import Conv1D, GlobalMaxPooling1D
+
 
 
 
@@ -80,7 +82,7 @@ def load_reviews(filename):
 
     ###
     #开发阶段读取前10000行 使用encoding='utf-8'参数非常重要
-    df = pd.read_csv(filename,sep=',',header=0,encoding='utf-8',nrows=200000)
+    df = pd.read_csv(filename,sep=',',header=0,encoding='utf-8',nrows=10000)
     print df.head()
 
     #按照列名直接获取数据 把 list转换成list对象
@@ -306,6 +308,99 @@ def do_fasttext(text,stars):
 
     print_results(*model.test("yelp_test.txt"))
 
+
+#使用keras的cnn
+def do_keras_cnn(text,stars):
+
+    #转换成词袋序列
+    max_document_length=200
+
+    #删除通用词
+    text_cleaned=[]
+
+    list_stopWords = list(set(stopwords.words('english')))
+    english_punctuations = [',', '.', ':', ';', '?', '(', ')', '[', ']', '&', '!', '*', '@', '#', '$', '%']
+    d = enchant.Dict("en_US")
+
+    #for line in text:
+
+        # 分词
+    #    list_words = word_tokenize(line.lower())
+        # 去掉标点符号
+    #    list_words = [word for word in list_words if word not in english_punctuations]
+        # 实用wordnet删除非常见英文单词
+        #list_words = [word for word in list_words if wordnet.synsets(word) ]
+    #    list_words = [word for word in list_words if d.check(word)]
+        # 过滤停止词
+     #   filtered_words = [w for w in list_words if not w in list_stopWords]
+     #   text_cleaned.append( " ".join(filtered_words) )
+
+
+    #text=text_cleaned
+
+    #设置分词最大个数 即词袋的单词个数
+    tokenizer = Tokenizer(num_words=max_features,lower=True)
+    tokenizer.fit_on_texts(text)
+    sequences = tokenizer.texts_to_sequences(text)
+
+    x=pad_sequences(sequences, maxlen=max_document_length)
+
+
+    #我们可以使用从scikit-learn LabelEncoder类。
+    # 这个类通过 fit() 函数获取整个数据集模型所需的编码,然后使用transform()函数应用编码来创建一个新的输出变量。
+    encoder=LabelEncoder()
+    encoder.fit(stars)
+    encoded_y = encoder.transform(stars)
+
+
+
+    #构造神经网络
+    def baseline_model():
+
+        #CNN参数
+        embedding_dims = 50
+        filters = 250
+        kernel_size = 3
+        hidden_dims = 250
+
+        model = Sequential()
+        model.add(Embedding(max_features, embedding_dims))
+
+        model.add(Conv1D(filters,
+                         kernel_size,
+                         padding='valid',
+                         activation='relu',
+                         strides=1))
+        #池化
+        model.add(GlobalMaxPooling1D())
+
+        model.add(Dense(2, activation='softmax'))
+
+        model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+
+        #可视化
+        plot_model(model, to_file='yelp-cnn-model.png',show_shapes=True)
+
+        model.summary()
+
+        return model
+    #在 scikit-learn 中使用 Keras 的模型,我们必须使用 KerasClassifier 进行包装。这个类起到创建并返回我们的神经网络模型的作用。
+    # 它需要传入调用 fit()所需要的参数,比如迭代次数和批处理大小。
+    # 最新接口指定训练的次数为epochs
+    clf = KerasClassifier(build_fn=baseline_model, epochs=10, batch_size=128, verbose=1)
+
+    #使用5折交叉验证
+    scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='f1_micro')
+    # print scores
+    print("f1_micro: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+    #scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='accuracy')
+    # print scores
+    #print("accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+
 if __name__ == '__main__':
 
 
@@ -326,8 +421,11 @@ if __name__ == '__main__':
     #使用MLP文档分类
     #do_keras_mlp(text,stars)
     #使用lstm文档分类
-    do_keras_lstm(text,stars)
+    #do_keras_lstm(text,stars)
     #使用SVM文档分类
     #do_svm(text,stars)
     #使用fasttext文档分类
     #do_fasttext(text,stars)
+
+    #使用cnn文档分类
+    do_keras_cnn(text,stars)

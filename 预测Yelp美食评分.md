@@ -460,6 +460,100 @@ LSTM和CNN都是计算密集型的模型，在CPU上运行的速度几乎难以�
     </tr>    
 </table>
 
+
+# 使用CNN进行情感分析
+
+近几年使用CNN处理文本分类问题也逐渐成为主流。我们尝试使用简单的CNN结构来处理Yelp的分类问题。首先通过一个Embedding层进行降维成为50位的向量，然后使用一个核数为250，步长为1的一维CNN层进行处理，接着连接一个池化层。为了防止过拟合，CNN层和全连接层之间随机丢失20%的数据进行训练。
+
+        #CNN参数
+        embedding_dims = 50
+        filters = 250
+        kernel_size = 3
+        hidden_dims = 250
+
+        model = Sequential()
+        model.add(Embedding(max_features, embedding_dims))
+
+        model.add(Conv1D(filters,
+                         kernel_size,
+                         padding='valid',
+                         activation='relu',
+                         strides=1))
+        #池化
+        model.add(GlobalMaxPooling1D())
+
+        model.add(Dense(2, activation='softmax'))
+
+        model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+	
+可视化结果如下。
+
+![预测Yelp美食评分-图6.png](picture/预测Yelp美食评分-图6.png)
+
+打印LSTM的结构。
+
+	model.summary()
+
+输出的结果如下所示，除了显示模型的结构，还可以显示需要训练的参数信息。
+
+	_________________________________________________________________
+	Layer (type)                 Output Shape              Param #   
+	=================================================================
+	embedding_1 (Embedding)      (None, None, 50)          250000    
+	_________________________________________________________________
+	conv1d_1 (Conv1D)            (None, None, 250)         37750     
+	_________________________________________________________________
+	global_max_pooling1d_1 (Glob (None, 250)               0         
+	_________________________________________________________________
+	dense_1 (Dense)              (None, 2)                 502       
+	=================================================================
+	Total params: 288,252
+	Trainable params: 288,252
+	Non-trainable params: 0
+	_________________________________________________________________
+
+在样本数为10000，特征数取5000的前提下，结果如下所示,。
+
+<table>
+    <tr>
+        <td>特征提取方式</td>
+        <td>F1值</td>
+    </tr>
+    <tr>
+        <td>词袋序列</td>
+        <td>0.88</td>
+    </tr>
+    <tr>
+        <td>词袋序列+全部转换成小写+删除停用词</td>
+        <td>0.86</td>
+    </tr>
+  
+</table>
+
+适当增加训练数据量，特征数取5000，词袋序列+全部转换成小写的前提下，结果如下所示，可见在该测试集合下，增加数据量对F1的影响有限。
+
+<table>
+    <tr>
+        <td>样本总量</td>
+        <td>F1值</td>
+    </tr>
+    <tr>
+        <td>1w</td>
+        <td>0.86</td>
+    </tr>
+    <tr>
+        <td>10w</td>
+        <td>0.90</td>
+    </tr>    
+        <tr>
+        <td>20w</td>
+        <td>0.91</td>
+    </tr>    
+</table>
+
+
 # 使用fasttext进行情感分析
 fasttext对训练和测试的数据格式有一定的要求，数据文件和标签文件要合并到一个文件里面。文件中的每一行代表一条记录，同时每条记录的最后标记对应的标签。默认情况下标签要以__label__开头,比如：
 
