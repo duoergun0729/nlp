@@ -321,6 +321,11 @@ TextCNN的一种实现方式，就是分别使用大小为3，4和5的一维卷�
     </tr>     
 </table>
 
+# TextCNN变种
+- CNN-rand:设计好 embedding_size 这个 Hyperparameter 后, 对不同单词的向量作随机初始化, 后续BP的时候作调整.
+- static:拿 pre-trained vectors from word2vec, FastText or GloVe 直接用, 训练过程中不再调整词向量. 这也算是迁移学习的一种思想.
+- non-static:pre-trained vectors + fine tuning , 即拿word2vec训练好的词向量初始化, 训练过程中再对它们微调.
+- multiple channel:类比于图像中的RGB通道, 这里也可以用 static 与 non-static 搭两个通道来搞.
 # 参考文献
 
 - Convolutional Neural Networks for Sentence Classification

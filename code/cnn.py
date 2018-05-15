@@ -154,32 +154,32 @@ def get_vec_by_sentence_list(word_vecs,sentence_list,maxlen=56,vec_size = 300):
 
 
 #使用keras的单层cnn
-def do_keras_cnn(text,stars,use_w2v=False):
+def do_keras_cnn(text,stars):
 
     #转换成词袋序列
     max_document_length=200
 
-    if use_w2v == False:
 
-        #设置分词最大个数 即词袋的单词个数
-        tokenizer = Tokenizer(num_words=max_features,lower=True)
-        tokenizer.fit_on_texts(text)
-        sequences = tokenizer.texts_to_sequences(text)
 
-        x=pad_sequences(sequences, maxlen=max_document_length)
-    else:
+    #设置分词最大个数 即词袋的单词个数
+    tokenizer = Tokenizer(num_words=max_features,lower=True)
+    tokenizer.fit_on_texts(text)
+    sequences = tokenizer.texts_to_sequences(text)
 
-        print "加载GoogleNews-vectors-negative300.bin..."
-        model = KeyedVectors.load_word2vec_format(word2vec_file, binary=True)
-        print "加载完毕"
+    x=pad_sequences(sequences, maxlen=max_document_length)
 
-        print model['boy'].shape
 
-        #词向量的维数 GoogleNews-vectors-negative300.bin维数为300
-        max_features=300
+    #print "加载GoogleNews-vectors-negative300.bin..."
+    #model = KeyedVectors.load_word2vec_format(word2vec_file, binary=True)
+    #print "加载完毕"
 
-        #x = np.concatenate([buildWordVector(model, z, 50) for z in text])
-        x = get_vec_by_sentence_list(model,text,max_document_length,max_features)
+    #print model['boy'].shape
+
+    #词向量的维数 GoogleNews-vectors-negative300.bin维数为300
+    #max_features=300
+
+    #x = np.concatenate([buildWordVector(model, z, 50) for z in text])
+    #x = get_vec_by_sentence_list(model,text,max_document_length,max_features)
 
 
 
@@ -407,7 +407,7 @@ if __name__ == '__main__':
     print count_classes
 
     #使用单层cnn文档分类
-    do_keras_cnn(text,stars,True)
+    do_keras_cnn(text,stars)
 
     #使用cnn+mlp文档分类
     #do_keras_cnn_mlp(text,stars)
