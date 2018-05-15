@@ -63,12 +63,8 @@ from keras.utils import plot_model
 
 #yelp评论文件路径 已经使用https://github.com/Yelp/dataset-examples处理成CSV格式
 #yelp_file="/Volumes/maidou/dataset/yelp/dataset/review.csv"
-
 yelp_file="/mnt/nlp/dataset/review.csv"
-
-
 #word2vec_file="/Volumes/maidou/dataset/gensim/GoogleNews-vectors-negative300.bin"
-
 word2vec_file="/mnt/nlp/dataset/GoogleNews-vectors-negative300.bin"
 
 #词袋模型的最大特征束
@@ -395,6 +391,118 @@ def do_keras_textcnn(text,stars):
     # print scores
     print("f1_micro: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
+
+#use pre train word2vec
+def do_keras_textcnn_w2v(text,stars):
+
+    #转换成词袋序列
+    max_document_length=200
+
+    embedding_dims = 300
+
+
+    #获取已经训练好的词向量
+    model = KeyedVectors.load_word2vec_format(word2vec_file, binary=True)
+
+    print model['word'].shape
+
+
+    #设置分词最大个数 即词袋的单词个数
+    tokenizer = Tokenizer(num_words=max_features,lower=True)
+    tokenizer.fit_on_texts(text)
+    sequences = tokenizer.texts_to_sequences(text)
+
+    x=pad_sequences(sequences, maxlen=max_document_length)
+
+
+    #我们可以使用从scikit-learn LabelEncoder类。
+    # 这个类通过 fit() 函数获取整个数据集模型所需的编码,然后使用transform()函数应用编码来创建一个新的输出变量。
+    encoder=LabelEncoder()
+    encoder.fit(stars)
+    encoded_y = encoder.transform(stars)
+
+    #labels = to_categorical(np.asarray(labels))也可以进行数据处理
+
+    #获取word到对应数字编号的映射关系
+    word_index = tokenizer.word_index
+    print('Found %s unique tokens.' % len(word_index))
+
+
+    #获取词向量的映射矩阵
+    embedding_matrix = np.zeros((max_features + 1, embedding_dims))
+
+    for word, i in word_index.items():
+
+        #编号大于max_features的忽略 该字典是按照字典顺序 所以对应的id不一定是顺序的
+        if i > max_features:
+            continue
+
+        try:
+            embedding_matrix[i] = model[word].reshape(embedding_dims)
+
+        except:
+            print "%s not found!" % (word)
+
+
+        #构造神经网络
+    def baseline_model():
+
+        #CNN参数
+
+        #filters个数通常与文本长度相当 便于提取特征
+        filters = max_document_length
+
+        # Inputs
+        input = Input(shape=[max_document_length])
+
+        # 词向量层，本文使用了预训练word2vec词向量，把trainable设为False
+        x = Embedding(max_features + 1,
+                                    embedding_dims,
+                                    weights=[embedding_matrix],
+                                    trainable=False)(input)
+
+
+
+        # conv layers
+        convs = []
+        for filter_size in [3,4,5]:
+            l_conv = Conv1D(filters=filters, kernel_size=filter_size, activation='relu')(x)
+            l_pool = MaxPooling1D()(l_conv)
+            l_pool = Flatten()(l_pool)
+            convs.append(l_pool)
+
+        merge = concatenate(convs, axis=1)
+
+        out = Dropout(0.2)(merge)
+
+        output = Dense(32, activation='relu')(out)
+
+        output = Dense(units=2, activation='softmax')(output)
+
+        #输出层
+        model = Model([input], output)
+
+        model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+
+        #可视化
+        plot_model(model, to_file='yelp-cnn-model-textcnn.png',show_shapes=True)
+
+        model.summary()
+
+        return model
+    #在 scikit-learn 中使用 Keras 的模型,我们必须使用 KerasClassifier 进行包装。这个类起到创建并返回我们的神经网络模型的作用。
+    # 它需要传入调用 fit()所需要的参数,比如迭代次数和批处理大小。
+    # 最新接口指定训练的次数为epochs
+    clf = KerasClassifier(build_fn=baseline_model, epochs=10, batch_size=50, verbose=1)
+
+    #使用5折交叉验证
+    scores = cross_val_score(clf, x, encoded_y, cv=5, scoring='f1_micro')
+    # print scores
+    print("f1_micro: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+
 if __name__ == '__main__':
 
 
@@ -407,10 +515,14 @@ if __name__ == '__main__':
     print count_classes
 
     #使用单层cnn文档分类
-    do_keras_cnn(text,stars)
+    #do_keras_cnn(text,stars)
 
     #使用cnn+mlp文档分类
     #do_keras_cnn_mlp(text,stars)
 
     #使用textCNN文档分类
     #do_keras_textcnn(text,stars)
+
+
+    #使用textCNN文档分类 以及预计训练的词向量
+    do_keras_textcnn_w2v(text,stars)
