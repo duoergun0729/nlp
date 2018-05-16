@@ -393,7 +393,7 @@ def do_keras_textcnn(text,stars):
 
 
 #use pre train word2vec
-def do_keras_textcnn_w2v(text,stars):
+def do_keras_textcnn_w2v(text,stars,trainable):
 
     #转换成词袋序列
     max_document_length=200
@@ -459,7 +459,7 @@ def do_keras_textcnn_w2v(text,stars):
         x = Embedding(max_features + 1,
                                     embedding_dims,
                                     weights=[embedding_matrix],
-                                    trainable=False)(input)
+                                    trainable=trainable)(input)
 
 
 
@@ -525,4 +525,4 @@ if __name__ == '__main__':
 
 
     #使用textCNN文档分类 以及预计训练的词向量
-    do_keras_textcnn_w2v(text,stars)
+    do_keras_textcnn_w2v(text,stars,True)

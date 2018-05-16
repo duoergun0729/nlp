@@ -332,7 +332,7 @@ TextCNN的一种实现方式，就是分别使用大小为3，4和5的一维卷�
 - multiple channel:类比于图像中的RGB通道, 这里也可以用static与non-static 搭两个通道来搞.
 
 ## static版本TextCNN
-可以通过预先训练的词向量，训练过程中不再调整词向量。最简单的一种实现方式就是使用Word2Vec训练好的词向量。在gensim库中，在Google News dataset数据集训练出的词向量。
+可以通过使用预先训练的词向量，训练过程中不再调整词向量。最简单的一种实现方式就是使用Word2Vec训练好的词向量。在gensim库中，在Google News dataset数据集训练出的词向量。
 
 	model = KeyedVectors.load_word2vec_format(word2vec_file, binary=True)
 	print model['word'].shape
@@ -435,7 +435,42 @@ TextCNN的一种实现方式，就是分别使用大小为3，4和5的一维卷�
     </tr>
     <tr>
         <td>10w</td>
-        <td></td>
+        <td>0.91</td>
+    </tr>     
+</table>
+
+## fine tuning版本的TextCNN
+fine tuning版本的TextCNN的最大特点是使用预先训练的词向量，训练过程中词向量的参数参与整个反向传递过程，接受训练和调整。具体实现时设置trainable为True即可。
+
+    # 词向量层，本文使用了预训练word2vec词向量并接受调整，把trainable设为True
+    x = Embedding(max_features + 1,
+                                embedding_dims,
+                                weights=[embedding_matrix],
+                                trainable=True)(input)
+
+
+查看需要训练的参数信息，发现所有参数均可以参与训练过程。
+
+	==================================================================================================
+	Total params: 4,108,998
+	Trainable params: 4,108,998
+	Non-trainable params: 0
+	__________________________________________________________________________________________________
+
+当特征提取使用词向量，且使用预训练好的词向量，特征数取5000的前提下，训练过程中词向量相关参数可改变，结果如下，可以看出增加数据量可以提升性能。在数据量相同的情况下，比单层CNN效果略好，与CNN+MLP效果相当。
+
+<table>
+    <tr>
+        <td>数据量</td>
+        <td>F1值</td>
+    </tr>
+    <tr>
+        <td>1w</td>
+        <td>0.89</td>
+    </tr>
+    <tr>
+        <td>10w</td>
+        <td>0.92</td>
     </tr>     
 </table>
 
