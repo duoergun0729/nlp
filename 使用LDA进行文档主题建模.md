@@ -109,6 +109,93 @@ LDA认为一篇文档由一些主题按照一定概率组成，一个主题又�
 
 	[(0,1),(2,5)]
 	
+
+# 使用多核计算
+
+LDA在生产环境中运行遇到的最大问题就是默认只能使用单核资源，运行速度过慢。gensim针对这一情况也提供了多核版本。
+
+	lda = models.ldamulticore.LdaMulticore(corpus=texts_tf_idf, id2word=dictionary, num_topics=num_topics)
+
+该版本默认情况默认使用cpu_count()-1 即使用几乎全部CPU，仅保留一个CPU不参与LDA计算，也可以通过参数workers指定使用的CPU个数，这里的CPU指的物理CPU，不是超线程的CPU数。一般认为：
+
+	CPU总核数 = 物理CPU个数 * 每颗物理CPU的核数 
+	总逻辑CPU数 = 物理CPU个数 * 每颗物理CPU的核数 * 超线程数
+
+可以尝试使用如下命令查看服务器的CPU信息。
+
+	# 查看CPU信息（型号）
+	cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c
+	24         Intel(R) Xeon(R) CPU E5-2630 0 @ 2.30GHz
+	
+	# 查看物理CPU个数
+	cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l
+	2
+	
+	# 查看每个物理CPU中core的个数(即核数)
+	cat /proc/cpuinfo| grep "cpu cores"| uniq
+	cpu cores    : 6
+	
+	# 查看逻辑CPU的个数
+	cat /proc/cpuinfo| grep "processor"| wc -l
+	24
+
+## 性能指标
+
+gensim官网上公布了一组测试数据，数据集为Wikipedia英文版数据集，该数据集有350万个文档，10万个特征，话题数设置为100的情况下运行LDA算法。硬件环境为一台拥有4个物理i7 CPU的服务器。使用单核接口需要使用3小时44分，当使用多核接口且使用3个物理CPU仅需要1小时6分钟。我们延续上面的例子，继续使用搜狗的数据集，为了要效果更加明显，我们使用SogouCS的前50000的数据进行LDA运算，话题数设置为100，并使用time.clock()获取当前时间，便于计算各个环节消耗的时间，比如计算LDA消耗的时间的方法如下所示。
+
+	#获取当前时间
+    start = time.clock()
+    #workers指定使用的CPU个数 默认使用cpu_count()-1 即使用几乎全部CPU 仅保留一个CPU不参与LDA计算
+    lda = models.ldamulticore.LdaMulticore(corpus=texts_tf_idf, id2word=dictionary, num_topics=num_topics)
+    #计算耗时
+    end = time.clock()
+    print('[lda]Running time: %s Seconds' % (end - start))
+
+分别计算使用1，2，4个CPU的情况，统计了预处理环节、LDA环节的耗时，其中预处理环节主要进行了词袋处理和TFIDF处理。
+
+<table>
+    <tr>
+        <td>CPU数</td>
+        <td>预处理环节耗时（单位：秒） </td>
+        <td>LDA环节耗时（单位：秒） </td>
+    </tr>
+    <tr>
+        <td>默认</td>
+        <td>24</td>
+        <td>169</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>25</td>
+        <td>437</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>24</td>
+        <td>296</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>25</td>
+        <td>215</td>
+    </tr>
+    <tr>
+        <td>6</td>
+        <td></td>
+        <td></td>
+    </tr>
+    </table>
+
+## 在线学习
+LDA的多核版本除了可以充分使用服务器的计算资源，还可以进行在线学习，动态更新模型。
+
+	lda = LdaMulticore(corpus, num_topics=10)
+	lda.update(other_corpus)
+	
+	
+
 # 参考文档
 
 - http://www.52nlp.cn/lda-math-文本建模
+- https://radimrehurek.com/gensim/models/ldamulticore.html
+- Hoffman, Blei, Bach: Online Learning for Latent Dirichlet Allocation, NIPS 2010.

@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import re
-from fastText import train_supervised
+import os
+#from fastText import train_supervised
 
 import numpy as np
 import codecs
@@ -13,10 +14,17 @@ from sklearn import feature_extraction
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import CountVectorizer
 
-from keras.utils import to_categorical
-from sklearn.preprocessing import OneHotEncoder
+#from keras.utils import to_categorical
+#from sklearn.preprocessing import OneHotEncoder
 
 from gensim import corpora, models
+
+import time
+
+#测试环境
+DEV_FILE="../data/news_sohusite_content_10000.txt"
+#生产环境
+PRO_FILE="/mnt/nlp/dataset/news_sohusite_content-50000.txt"
 
 
 def load_stopwords():
@@ -27,8 +35,12 @@ def load_stopwords():
 
 
 def load_sougou_content():
-    #with open("../data/news_sohusite_content.txt") as F:
-    with open("../data/news_sohusite_content_10000.txt") as F:
+    filename=PRO_FILE
+
+    if os.path.exists(DEV_FILE):
+        filename=DEV_FILE
+
+    with open(filename) as F:
         content=F.readlines()
         F.close()
     return content
@@ -111,11 +123,65 @@ def do_lda():
     #    print(doc_tfidf)
     print corpus_lda[0]
 
+
+def do_lda_usemulticore():
+
+
+
+    #加载搜狗新闻数据
+    content=load_sougou_content()
+
+    #加载停用词
+    stopwords=load_stopwords()
+
+    #切割token
+    content=[  [word for word in line.split() if word not in stopwords]   for line in content]
+
+
+    #获取当前时间
+    start = time.clock()
+
+
+    # 得到文档-单词矩阵 （直接利用统计词频得到特征）
+    dictionary = corpora.Dictionary(content)
+
+    # 将dictionary转化为一个词袋，得到文档-单词矩阵
+    texts = [dictionary.doc2bow(text) for text in content]
+
+    # 利用tf-idf来做为特征进行处理
+    texts_tf_idf = models.TfidfModel(texts)[texts]
+
+    #计算耗时
+    end = time.clock()
+    print('[get word bag]Running time: %s Seconds' % (end - start))
+
+
+    # 利用TFIDF&LDA做主题分类的情况
+    print "TFIDF&LDA"
+
+    num_topics=200
+
+    start = time.clock()
+
+
+    #workers指定使用的CPU个数 默认使用cpu_count()-1 即使用几乎全部CPU 仅保留一个CPU不参与LDA计算
+    #https://radimrehurek.com/gensim/models/ldamulticore.html
+    #Hoffman, Blei, Bach: Online Learning for Latent Dirichlet Allocation, NIPS 2010.
+    #lda = models.ldamulticore.LdaMulticore(corpus=texts_tf_idf, id2word=dictionary, num_topics=num_topics)
+    lda = models.ldamulticore.LdaMulticore(corpus=texts_tf_idf, id2word=dictionary,
+                                           num_topics=num_topics,workers=1)
+
+    #计算耗时
+    end = time.clock()
+    print('[lda]Running time: %s Seconds' % (end - start))
+
+
 if __name__ == '__main__':
 
     #test_bow()
+    #do_lda()
+    do_lda_usemulticore()
 
-    do_lda()
 
 
 
