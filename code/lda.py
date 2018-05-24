@@ -185,8 +185,6 @@ def do_lda_usemulticore():
         print topic
 
 
-
-
     #计算耗时
     end = time.clock()
     print('[lda]Running time: %s Seconds' % (end - start))
