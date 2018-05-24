@@ -40,9 +40,13 @@ def load_sougou_content():
     if os.path.exists(DEV_FILE):
         filename=DEV_FILE
 
+    print "Open data file %s" % (filename)
+
     with open(filename) as F:
         content=F.readlines()
         F.close()
+
+
     return content
 
 def test_bow():
@@ -126,7 +130,8 @@ def do_lda():
 
 def do_lda_usemulticore():
 
-
+    #获取当前时间
+    start = time.clock()
 
     #加载搜狗新闻数据
     content=load_sougou_content()
@@ -136,6 +141,10 @@ def do_lda_usemulticore():
 
     #切割token
     content=[  [word for word in line.split() if word not in stopwords]   for line in content]
+
+    #计算耗时
+    end = time.clock()
+    print('[data clean]Running time: %s Seconds' % (end - start))
 
 
     #获取当前时间
@@ -167,9 +176,16 @@ def do_lda_usemulticore():
     #workers指定使用的CPU个数 默认使用cpu_count()-1 即使用几乎全部CPU 仅保留一个CPU不参与LDA计算
     #https://radimrehurek.com/gensim/models/ldamulticore.html
     #Hoffman, Blei, Bach: Online Learning for Latent Dirichlet Allocation, NIPS 2010.
-    #lda = models.ldamulticore.LdaMulticore(corpus=texts_tf_idf, id2word=dictionary, num_topics=num_topics)
-    lda = models.ldamulticore.LdaMulticore(corpus=texts_tf_idf, id2word=dictionary,
-                                           num_topics=num_topics,workers=1)
+    lda = models.ldamulticore.LdaMulticore(corpus=texts_tf_idf, id2word=dictionary, num_topics=num_topics)
+    #lda = models.ldamulticore.LdaMulticore(corpus=texts_tf_idf, id2word=dictionary,
+    #                                       num_topics=num_topics,workers=12)
+
+    # 打印前10个主题
+    for index, topic in lda.print_topics(num_topics=10, num_words=10):
+        print topic
+
+
+
 
     #计算耗时
     end = time.clock()
