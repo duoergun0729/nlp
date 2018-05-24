@@ -189,7 +189,6 @@ def do_lda_usemulticore():
     end = time.clock()
     print('[lda]Running time: %s Seconds' % (end - start))
 
-
 if __name__ == '__main__':
 
     #test_bow()
