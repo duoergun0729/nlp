@@ -23,6 +23,9 @@ from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 
 import time
+from jieba import analyse
+
+from sklearn.metrics import silhouette_score
 
 #测试环境
 DEV_FILE="../data/news_sohusite_content_1000.txt"
@@ -71,6 +74,75 @@ def transformedCorpus2Vec(turples,num_topics):
     return ret
 
 
+def get_keywords(articles):
+
+
+    text=""
+
+    text=" ".join(articles)
+
+
+    keywords_tfidf = analyse.extract_tags(text, topK=10,
+                                          withWeight=False, allowPOS=('n', 'ns', 'vn', 'v', 'nz'))
+
+    return keywords_tfidf
+
+
+def do_cluster(x,articles_content):
+    start = time.clock()
+
+    #使用DBSCAN进行聚类分类
+    db = DBSCAN(eps=5.8, min_samples=2).fit(x)
+
+    #获取每条记录对应的聚类标签 其中-1表示识别为噪音点
+    labels = db.labels_
+
+    #统计聚类个数
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+
+    print "n_clusters_:%d" % (n_clusters_)
+
+    #计算耗时
+    end = time.clock()
+    print('[cluster]Running time: %s Seconds' % (end - start))
+
+    #把列表转成数组np结构
+    articles_content=np.array(articles_content)
+
+    for clusters_id in range(1,n_clusters_+1):
+        print "/********************************************************************/"
+        print "clusters_id %d" % (clusters_id)
+        articles=articles_content[labels==clusters_id]
+
+        #keywords=get_keywords(articles)
+
+        #for keyword in keywords:
+        #    print keyword + "/"
+
+        for article in articles:
+            print article[:200]
+
+
+def do_cluster_dbscan(x,articles_content):
+
+
+    for eps in np.arange(0.1,10.0,0.1):
+
+        #使用DBSCAN进行聚类分类
+        db = DBSCAN(eps=eps, min_samples=2).fit(x)
+        silhouette=silhouette_score(x, db.labels_)
+
+        print "eps=%.2f silhouette=%.2f" % (eps,silhouette)
+
+
+
+
+
+
+
+
+
+
 def do_lda_usemulticore():
 
     #获取当前时间
@@ -78,6 +150,9 @@ def do_lda_usemulticore():
 
     #加载搜狗新闻数据
     content=load_sougou_content()
+
+    #备份原始数据
+    articles_content=content
 
     #加载停用词
     stopwords=load_stopwords()
@@ -133,35 +208,14 @@ def do_lda_usemulticore():
     #格式转化 x是稀疏矩阵 需要转换成正常的格式
     x=[ transformedCorpus2Vec(x,num_topics) for x in x  ]
 
-    start = time.clock()
+
 
     #标准化
     x = StandardScaler().fit_transform(x)
 
-    #使用DBSCAN进行聚类分类
-    db = DBSCAN(eps=0.5, min_samples=6).fit(x)
-
-    #获取每条记录对应的聚类标签 其中-1表示识别为噪音点
-    labels = db.labels_
-
-    #统计聚类个数
-    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-
-    print "n_clusters_:%d" % (n_clusters_)
-
-    #计算耗时
-    end = time.clock()
-    print('[cluster]Running time: %s Seconds' % (end - start))
-
-    content=np.array(content)
-
-    for clusters_id in range(n_clusters_):
-        print "clusters_id %d" % (clusters_id)
-        #index=np.where(labels==clusters_id)
-        articles=content[labels==clusters_id]
-        for article in articles:
-            print article
-
+    #聚类分析
+    #do_cluster_dbscan(x, articles_content)
+    do_cluster(x, articles_content)
 
 
 
@@ -171,6 +225,8 @@ def do_lda_usemulticore():
 
 if __name__ == '__main__':
 
+    #设置NTLK全局停用词
+    analyse.set_stop_words("stopwords.txt")
 
     do_lda_usemulticore()
 
