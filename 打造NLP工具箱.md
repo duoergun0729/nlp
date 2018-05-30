@@ -83,3 +83,17 @@ NTLK分为模型和数据两部分，其中数据需要单独下载。
 Jieba，经常被人昵称为结巴，是最受欢迎的中文分词工具，安装方式如下：
 
 	pip install jieba
+
+# GPU服务器
+当数据量大或者计算量大时，GPU几乎成为必选，尤其是使用CNN和RNN时，几乎就是CPU杀手。目前主流的云上都提供了GPU服务器。以百度云为例，默认支持的tensorflow的GPU版本是1.4。
+当你习惯使用python2.*时，推荐使用的组合为：
+	
+	- tensorflow-gpu==1.4
+	- keras==2.1.5
+	- python==2.7
+	
+当你习惯使用python5.*时，推荐使用的组合为：
+	
+	- tensorflow-gpu==1.4
+	- keras==2.1.5
+	- python==3.5
