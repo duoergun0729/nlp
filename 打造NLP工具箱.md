@@ -141,7 +141,7 @@ Jieba，经常被人昵称为结巴，是最受欢迎的中文分词工具，安
 	pip install jieba
 
 
-#Jupyter notebook
+# Jupyter notebook
 Jupyter notebook中使用Anaconda中的环境需要单独配置，默认情况下使用的是系统默认的Python环境，以使用advbox环境为例。 首先在默认系统环境下执行以下命令，安装ipykernel。
 
 	conda install ipykernel
