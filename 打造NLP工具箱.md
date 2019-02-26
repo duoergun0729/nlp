@@ -151,6 +151,45 @@ Jupyter notebook中使用Anaconda中的环境需要单独配置，默认情况�
 
 	python -m ipykernel install --user --name advbox --display-name advbox 
 
+
+远程访问jupyter notebook
+ipython notebook是一个基于浏览器的python数据分析工具，使用起来非常方便，具有极强的交互方式和富文本的展示效果。jupyter是它的升级版，它的安装也非常方便，一般Anaconda安装包中会自带。安装好以后直接输入jupyter notebook便可以在浏览器中使用。但是它默认只能在本地访问，如果想把它安装在服务器上，然后在本地远程访问，则需要进行如下配置：
+
+1. 登陆远程服务器
+2. 生成配置文件
+
+	$jupyter notebook --generate-config
+ 
+
+3. 生成密码
+打开ipython，创建一个密文的密码：
+
+	In [1]: from notebook.auth import passwd
+	In [2]: passwd()
+	Enter password: 
+	Verify password: 
+	Out[2]: 'sha1:ce23d945972f:34769685a7ccd3d08c84a18c63968a41f1140274'
+ 
+
+把生成的密文‘sha:ce…’复制下来
+
+4. 修改默认配置文件
+
+	$vim ~/.jupyter/jupyter_notebook_config.py 
+
+进行如下修改：
+
+	c.NotebookApp.ip='*'
+	c.NotebookApp.password = u'sha:ce...刚才复制的那个密文'
+	c.NotebookApp.open_browser = False
+	c.NotebookApp.port =8888 #随便指定一个端口
+ 
+
+5. 启动jupyter notebook：
+
+	$jupyter notebook
+
+
 # GPU服务器
 当数据量大或者计算量大时，GPU几乎成为必选，尤其是使用CNN和RNN时，几乎就是CPU杀手。目前主流的云上都提供了GPU服务器。以百度云为例，默认支持的tensorflow的GPU版本是1.4。
 当你习惯使用python2.*时，推荐使用的组合为：
