@@ -164,3 +164,13 @@ Jupyter notebook中使用Anaconda中的环境需要单独配置，默认情况�
 	- tensorflow-gpu==1.4
 	- keras==2.1.5
 	- python==3.5
+
+	手工安装深度学习库
+	
+有时候需要根据软硬件环境自己选择安装对应的深度学习库。其中最重要的是看cuDNN和CUDA的版本，查看服务器的cuDNN和CUDA版本的方法为：
+
+	#cuda 版本 
+	cat /usr/local/cuda/version.txt
+	#cudnn 版本  
+	cat /usr/local/cuda/include/cudnn.h | grep CUDNN_MAJOR -A 2 
+	#或者 cat /usr/include/cudnn.h | grep CUDNN_MAJOR -A 2
