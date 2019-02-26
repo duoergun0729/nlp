@@ -173,4 +173,5 @@ Jupyter notebook中使用Anaconda中的环境需要单独配置，默认情况�
 	cat /usr/local/cuda/version.txt
 	#cudnn 版本  
 	cat /usr/local/cuda/include/cudnn.h | grep CUDNN_MAJOR -A 2 
-	#或者 cat /usr/include/cudnn.h | grep CUDNN_MAJOR -A 2
+	#或者 
+	cat /usr/include/cudnn.h | grep CUDNN_MAJOR -A 2
