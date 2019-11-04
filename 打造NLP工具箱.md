@@ -198,7 +198,7 @@ ipython notebook是一个基于浏览器的python数据分析工具，使用起�
 	- keras==2.1.5
 	- python==2.7
 	
-当你习惯使用python5.*时，推荐使用的组合为：
+当你习惯使用python3.*时，推荐使用的组合为：
 	
 	- tensorflow-gpu==1.4
 	- keras==2.1.5
