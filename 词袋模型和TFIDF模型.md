@@ -14,14 +14,7 @@
 实例化分词对象：
 
     >>> vectorizer = CountVectorizer(min_df=1)
-    >>> vectorizer                    
-    CountVectorizer(analyzer=...'word', binary=False, decode_error=...'strict',
-            dtype=<... 'numpy.int64'>, encoding=...'utf-8', input=...'content',
-            lowercase=True, max_df=1.0, max_features=None, min_df=1,
-            ngram_range=(1, 1), preprocessor=None, stop_words=None,
-            strip_accents=None, token_pattern=...'(?u)\\b\\w\\w+\\b',
-            tokenizer=None, vocabulary=None)
-            
+
 将文本进行词袋处理：
 
     >>> corpus = [
@@ -31,43 +24,38 @@
     ...     'Is this the first document?',
     ... ]
     >>> X = vectorizer.fit_transform(corpus)
-    >>> X                             
-    <4x9 sparse matrix of type '<... 'numpy.int64'>'
-        with 19 stored elements in Compressed Sparse ... format>
-        
-获取对应的特征名称：
+    >>> X.shape
+    (4, 9)
 
-    >>> vectorizer.get_feature_names() == (
-    ...     ['and', 'document', 'first', 'is', 'one',
-    ...      'second', 'the', 'third', 'this'])
-    True
-    
+获取对应的特征名称，顺序和矩阵的列一一对应（scikit-learn 1.0 及以上）：
+
+    >>> vectorizer.get_feature_names_out().tolist()
+    ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+
+如果使用旧版 scikit-learn 0.x，这一步可以用 vectorizer.get_feature_names()，它直接返回一个列表。
+
 获取词袋数据，至此我们已经完成了词袋化：
 
     >>> X.toarray()          
     array([[0, 1, 1, 1, 0, 0, 1, 0, 1],
            [0, 1, 0, 1, 0, 2, 1, 0, 1],
            [1, 0, 0, 0, 1, 0, 1, 1, 0],
-           [0, 1, 1, 1, 0, 0, 1, 0, 1]]...)
+           [0, 1, 1, 1, 0, 0, 1, 0, 1]])
 
-但是如何可以使用现有的词袋的特征，对其他文本进行特征提取呢？我们定义词袋的特征空间叫做词汇表vocabulary：
+第二篇文档中的 second 出现了两次，所以它在第六列的计数是 2。处理新文档时，调用已拟合的 vectorizer 的 transform 方法可以沿用相同的列顺序。下面的 unseen 不在词汇表中，会被忽略：
 
-    vocabulary=vectorizer.vocabulary_
-    
-针对其他文本进行词袋处理时，可以直接使用现有的词汇表：
+    >>> vectorizer.transform(['second second unseen']).toarray()
+    array([[0, 0, 0, 0, 0, 2, 0, 0, 0]])
 
-    >>> new_vectorizer = CountVectorizer(min_df=1, vocabulary=vocabulary)
-    
-CountVectorize函数比较重要的几个参数为：
+CountVectorizer 比较重要的几个参数为：
 
 - decode_error，处理解码失败的方式，分为‘strict’、‘ignore’、‘replace’三种方式。
 - strip_accents，在预处理步骤中移除重音的方式。
 - max_features，词袋特征个数的最大值。
-- stop_words，判断word结束的方式。
+- stop_words，指定要从词表中过滤的停用词。
 - max_df，df最大值。
 - min_df，df最小值 。
-- binary，默认为False，当与TF-IDF结合使用时需要设置为True。
-本例中处理的数据集均为英文，所以针对解码失败直接忽略，使用ignore方式，stop_words的方式使用english，strip_accents方式为ascii方式。
+- binary，默认值 False 会保留词频，可直接用于下面的 TF-IDF 计算。设为 True 时，每个出现过的词的计数都记为 1，上例中 second 出现两次的信息也会丢失。
 
 # TF-IDF模型
 文本处理领域还有一种特征提取方法，叫做TF-IDF模型（term frequency–inverse document frequency，词频与逆向文件频率）。TF-IDF是一种统计方法，用以评估某一字词对于一个文件集或一个语料库的重要程度。字词的重要性随着它在文件中出现的次数成正比增加，但同时会随着它在语料库中出现的频率成反比下降。TF-IDF加权的各种形式常被搜索引擎应用，作为文件与用户查询之间相关程度的度量或评级。
@@ -76,8 +64,7 @@ TF-IDF的主要思想是，如果某个词或短语在一篇文章中出现的�
 
     >>> from sklearn.feature_extraction.text import TfidfTransformer
     >>> transformer = TfidfTransformer(smooth_idf=False)
-    >>> transformer    
-    TfidfTransformer(norm=...'l2', smooth_idf=False, sublinear_tf=False, use_idf=True)
+
 TF-IDF模型通常和词袋模型配合使用，对词袋模型生成的数组进一步处理：
 
     >>> counts = [[3, 0, 1],
@@ -86,17 +73,16 @@ TF-IDF模型通常和词袋模型配合使用，对词袋模型生成的数组�
     ...           [4, 0, 0],
     ...           [3, 2, 0],
     ...           [3, 0, 2]]
-    ...
-     >>> tfidf = transformer.fit_transform(counts)
-    >>> tfidf                         
-    <6x3 sparse matrix of type '<... 'numpy.float64'>'     with 9 stored elements in Compressed Sparse ... format> 
-    >>> tfidf.toarray()                         
-    array([[ 0.81940995,  0.        ,  0.57320793],       
-    [ 1.        ,  0.        ,  0.        ],      
-    [ 1.        ,  0.        ,  0.        ],  
-    [ 1.        ,  0.        ,  0.        ],       
-    [ 0.47330339,  0.88089948,  0.        ],       
-    [ 0.58149261,  0.        ,  0.81355169]])
+    >>> tfidf = transformer.fit_transform(counts)
+    >>> tfidf.shape
+    (6, 3)
+    >>> tfidf.toarray().round(4)
+    array([[0.8194, 0.    , 0.5732],
+           [1.    , 0.    , 0.    ],
+           [1.    , 0.    , 0.    ],
+           [1.    , 0.    , 0.    ],
+           [0.4733, 0.8809, 0.    ],
+           [0.5815, 0.    , 0.8136]])
 
 # 词汇表模型
 词袋模型可以很好的表现文本由哪些单词组成，但是却无法表达出单词之间的前后关系，于是人们借鉴了词袋模型的思想，使用生成的词汇表对原有句子按照单词逐个进行编码。TensorFlow默认支持了这种模型：
